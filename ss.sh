@@ -31,13 +31,13 @@ Connection Summary:
 $(ss -s | head -2)
 ---------------------------------------------------------------------------
 Connection Concentration:
-IN::
+IN (top 3)::
 $(netstat -utn | \
   awk '/^A|ESTABLISHED|TIME_WAIT/ && !/^Ac/ \
        {gsub(".*:", "", $4); \
        print $4}' \
        | sort -n | uniq -c | sort -rn | head -3 )
-OUT::
+OUT (top 3)::
 $(netstat -utn | \
   awk '/^A|ESTABLISHED|TIME_WAIT/ && !/^Ac/ \
        {gsub(".*:", "", $5); \
