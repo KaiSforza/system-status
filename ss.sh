@@ -13,7 +13,7 @@ $(w -h)
 ---------------------------------------------------------------------------
 $(df -h -x tmpfs -x devtmpfs)
 
-$(df -hi -x tmpfs -x devtmpfs)
+$(df -i -x tmpfs -x devtmpfs)
 ---------------------------------------------------------------------------
 Memory used: $(awk -v memused=$(free -m | awk \ '/buffers\/cache/ {print $3}') \
   'END { \
