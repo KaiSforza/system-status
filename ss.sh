@@ -21,10 +21,12 @@ Memory used: $(awk -v memused=$(free -m | awk \ '/buffers\/cache/ {print $3}') \
   upperlimit = (memtotal * 0.9)
   lowerlimit = (memtotal *  0.7)
   if (lowerlimit < memused && memused <  upperlimit)
-    printf "\033[1;33m" memused" MB" "\033[0m" " / " total "  MB"
+    printf("\033[1;33m%dMB\033[0m/%dMB", memused, memtotal)
   else if (memused > upperlimit )
-    printf "\033[1;31m" memused" MB"  "\033[0m" " / " memtotal " MB"
-  else printf "\033[1;32m" memused" MB"  "\033[0m" " / " memtotal " MB"}' \
+    printf("\033[1;31m%dMB\033[0m/%dMB", memused, memtotal)
+  else
+    printf("\033[1;32m%dMB\033[0m/%dMB", memused, memtotal)
+  }' \
    <<< $(free -m | awk '/^Mem/ {print $2}'))
 ---------------------------------------------------------------------------
 Connection Summary:
