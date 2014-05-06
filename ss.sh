@@ -36,20 +36,21 @@ Connection Concentration:
 IN (top 3)::
 $(netstat -utn | \
   awk '/^A|ESTABLISHED|TIME_WAIT/ && !/^Ac/ \
-       {gsub(".*:", "", $4); \
+       {gsub(".*:", "", $4)
        print $4}' \
        | sort -n | uniq -c | sort -rn | head -3 )
 OUT (top 3)::
 $(netstat -utn | \
   awk '/^A|ESTABLISHED|TIME_WAIT/ && !/^Ac/ \
-       {gsub(".*:", "", $5); \
+       {gsub(".*:", "", $5)
        print $5}' \
        | sort -n | uniq -c | sort -rn | head -3 )
 ---------------------------------------------------------------------------
 $(
 ss -plnt | awk '
   BEGIN { printf("%-15s%-7s%-7s%s\n", "Listening", "Recv-Q", "Send-Q", "Processes") }
-  !/Recv-Q/ {gsub("users:\\(\\(", "", $6)
+  !/Recv-Q/ {
+  gsub("users:\\(\\(", "", $6)
   gsub("\\)\\)$", "", $6)
   gsub("\"", "", $6)
   split($6, a, "\\),\\(")
