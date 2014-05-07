@@ -1,7 +1,18 @@
+_PKGS=()
+if ! type -p gawk >/dev/null; then
+  _PKGS=('gawk')
+fi
+if ! type -p htop >/dev/null; then
+  _PKGS+=('htop')
+fi
+
+if [[ -n ${_PKGS[@]} ]]; then
+  apt-get -qq install ${_PKGS[@]} 2>/dev/null || \
+    yum install -y -q ${_PKGS[@]} 2>/dev/null || \
+    echo "...but we don't know the package manager here."
+fi
+
 cat << EOF
-Installing gawk and htop for administrative purposes...
-$(apt-get -qq install gawk htop || yum install -y -q gawk htop || \
-  echo "...but we don't know the package manager here.")
 ---------------------------------------------------------------------------
 Hostname: $(hostname)
 ---------------------------------------------------------------------------
