@@ -1,4 +1,7 @@
 cat << EOF
+Installing gawk and htop for administrative purposes...
+$(apt-get -qq install gawk htop || yum install -y -q gawk htop || \
+  echo "...but we don't know the package manager here.")
 ---------------------------------------------------------------------------
 Hostname: $(hostname)
 ---------------------------------------------------------------------------
@@ -47,7 +50,7 @@ $(netstat -utn | \
        | sort -n | uniq -c | sort -rn | head -3 )
 ---------------------------------------------------------------------------
 $(
-ss -plnt | awk '
+ss -plnt | gawk '
   BEGIN { printf("%-15s%-7s%-7s%s\n", "Listening", "Recv-Q", "Send-Q", "Processes") }
   !/Recv-Q/ {
   gsub("users:\\(\\(", "", $6)
