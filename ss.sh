@@ -7,8 +7,8 @@ if ! type -p htop >/dev/null; then
 fi
 
 if [[ -n ${_PKGS[@]} ]]; then
-  apt-get -qq install ${_PKGS[@]} 2>/dev/null || \
-    yum install -y -q ${_PKGS[@]} 2>/dev/null || \
+  apt-get -qq install ${_PKGS[@]} >/dev/null 2>&1 || \
+    yum install -y -q ${_PKGS[@]} >/dev/null 2>&1 || \
     echo "...but we don't know the package manager here."
 fi
 
