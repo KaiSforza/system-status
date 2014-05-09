@@ -2,7 +2,7 @@ _PKGS=()
 if ! type -p gawk >/dev/null; then
   _PKGS=('gawk')
 fi
-if ! type -p htop >/dev/null; then
+if ! type -p htop >/dev/null && [[ $1 == '-h' ]]; then
   _PKGS+=('htop')
 fi
 
