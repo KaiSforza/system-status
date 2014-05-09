@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 _PKGS=()
 
 while [[ -n $1 ]]; do
