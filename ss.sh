@@ -1,16 +1,23 @@
 _PKGS=()
-if ! type -p gawk >/dev/null; then
-  _PKGS=('gawk')
-fi
-if ! type -p htop >/dev/null && [[ $1 == '-h' ]]; then
-  _PKGS+=('htop')
-fi
+
+while [[ -n $1 ]]; do
+  case $1 in
+    -g) _PKGS+=('gawk') ;;
+    -h) _PKGS+=('htop') ;;
+    -hg|-gh) _PKGS=('gawk' 'htop') ;;
+  esac
+done
 
 if [[ -n ${_PKGS[@]} ]]; then
   apt-get -qq install ${_PKGS[@]} >/dev/null 2>&1 || \
     yum install -y -q ${_PKGS[@]} >/dev/null 2>&1 || \
     echo "...but we don't know the package manager here."
 fi
+
+if ! type -p gawk >/dev/null; then
+  echo "We need 'gawk' for the service information bit"
+fi
+
 
 cat << EOF
 ---------------------------------------------------------------------------
