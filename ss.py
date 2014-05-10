@@ -290,7 +290,7 @@ def format_ssntlp(m=2):
 ns = format_ns()
 
 p = """{sep}
-{host}
+Hostname: {host}
 {sep}
 {ipaddrs}
 {sep}
