@@ -71,13 +71,13 @@ $(netstat -utn | \
 ---------------------------------------------------------------------------
 $(
 ss -plnt | gawk '
-  BEGIN { printf("%-15s%-7s%-7s%s\n", "Listening", "Recv-Q", "Send-Q", "Processes") }
+  BEGIN { printf("%-18s%-7s%-7s%s\n", "Listening", "Recv-Q", "Send-Q", "Processes") }
   !/Recv-Q/ {
   gsub("users:\\(\\(", "", $6)
   gsub("\\)\\)$", "", $6)
   gsub("\"", "", $6)
   split($6, a, "\\),\\(")
-  printf("%-15s%-7s%-7s%s", $4, $2, $3, a[1])
+  printf("%-18s%-7s%-7s%s", $4, $2, $3, a[1])
   if(length(a) > 1)
     printf(",  %s", a[2])
   if(length(a) > 2)
