@@ -4,34 +4,182 @@
 
 from __future__ import division
 
-import subprocess
+try:
+    from subprocess import check_output
+
+    def output(*popenargs, **kwargs):
+        return check_output(*popenargs, **kwargs)
+
+except:
+    from subprocess import Popen, PIPE, CalledProcessError
+
+    def output(*popenargs, **kwargs):
+        if 'stdout' in kwargs:
+            raise ValueError(
+                'stdout argument not allowed, it will be overridden.')
+        process = Popen(stdout=PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise CalledProcessError(retcode, cmd, output=output)
+        return output
+
 import socket
 import re
-import collections
+
+try:
+    from collections import Counter
+except:
+    from operator import itemgetter as _itemgetter
+    import heapq as _heapq
+    from itertools import (
+        repeat as _repeat, chain as _chain, starmap as _starmap)
+
+    class Counter(dict):
+        def __init__(self, iterable=None, **kwds):
+            super(Counter, self).__init__()
+            self.update(iterable, **kwds)
+
+        def __missing__(self, key):
+            return 0
+
+        def most_common(self, n=None):
+            if n is None:
+                return sorted(
+                    self.iteritems(), key=_itemgetter(1), reverse=True)
+            return _heapq.nlargest(n, self.iteritems(), key=_itemgetter(1))
+
+        def elements(self):
+            return _chain.from_iterable(_starmap(_repeat, self.iteritems()))
+
+        @classmethod
+        def fromkeys(cls, iterable, v=None):
+            raise NotImplementedError(
+                'Counter.fromkeys() is undefined. \
+                Use Counter(iterable) instead.')
+
+        def update(self, iterable=None, **kwds):
+            if iterable is not None:
+                # if isinstance(iterable, Mapping):
+                if hasattr(iterable, 'iteritems'):
+                    if self:
+                        self_get = self.get
+                        for elem, count in iterable.iteritems():
+                            self[elem] = self_get(elem, 0) + count
+                    else:
+                        super(Counter, self).update(iterable)
+                else:
+                    self_get = self.get
+                    for elem in iterable:
+                        self[elem] = self_get(elem, 0) + 1
+            if kwds:
+                self.update(kwds)
+
+        def subtract(self, iterable=None, **kwds):
+            if iterable is not None:
+                self_get = self.get
+                if hasattr(iterable, 'iteritems'):
+                    for elem, count in iterable.items():
+                        self[elem] = self_get(elem, 0) - count
+                else:
+                    for elem in iterable:
+                        self[elem] = self_get(elem, 0) - 1
+            if kwds:
+                self.subtract(kwds)
+
+        def copy(self):
+            return self.__class__(self)
+
+        def __reduce__(self):
+            return self.__class__, (dict(self),)
+
+        def __delitem__(self, elem):
+            if elem in self:
+                super(Counter, self).__delitem__(elem)
+
+        def __repr__(self):
+            if not self:
+                return '%s()' % self.__class__.__name__
+            items = ', '.join(map('%r: %r'.__mod__, self.most_common()))
+            return '%s({%s})' % (self.__class__.__name__, items)
+
+        def __add__(self, other):
+            if not isinstance(other, Counter):
+                return NotImplemented
+            result = Counter()
+            for elem, count in self.items():
+                newcount = count + other[elem]
+                if newcount > 0:
+                    result[elem] = newcount
+            for elem, count in other.items():
+                if elem not in self and count > 0:
+                    result[elem] = count
+            return result
+
+        def __sub__(self, other):
+            if not isinstance(other, Counter):
+                return NotImplemented
+            result = Counter()
+            for elem, count in self.items():
+                newcount = count - other[elem]
+                if newcount > 0:
+                    result[elem] = newcount
+            for elem, count in other.items():
+                if elem not in self and count < 0:
+                    result[elem] = 0 - count
+            return result
+
+        def __or__(self, other):
+            if not isinstance(other, Counter):
+                return NotImplemented
+            result = Counter()
+            for elem, count in self.items():
+                other_count = other[elem]
+                newcount = other_count if count < other_count else count
+                if newcount > 0:
+                    result[elem] = newcount
+            for elem, count in other.items():
+                if elem not in self and count > 0:
+                    result[elem] = count
+            return result
+
+        def __and__(self, other):
+            if not isinstance(other, Counter):
+                return NotImplemented
+            result = Counter()
+            for elem, count in self.items():
+                other_count = other[elem]
+                newcount = count if count < other_count else other_count
+                if newcount > 0:
+                    result[elem] = newcount
+            return result
 
 
-df = subprocess.check_output(['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
-                             universal_newlines=True)
-dfi = subprocess.check_output(['df', '-i', '-x', 'tmpfs', '-x', 'devtmpfs'],
-                              universal_newlines=True)
+df = output(['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
+            universal_newlines=True)
+dfi = output(['df', '-i', '-x', 'tmpfs', '-x', 'devtmpfs'],
+             universal_newlines=True)
 
-sss = subprocess.check_output(['ss', '-s'], universal_newlines=True)
+sss = output(['ss', '-s'], universal_newlines=True)
 
 hostname = socket.gethostname()
 
 
 def parse_ip_output():
-    ip = subprocess.check_output(['/sbin/ip', 'a'], universal_newlines=True)
-    rawips = re.findall(r'(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
+    ip = output(['/sbin/ip', 'a'], universal_newlines=True)
+    rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
     ips = [str.split(x[0]) for x in rawips]
     iplist = []
     for i in ips:
-        iplist.append('{:8}{}'.format(i[-1], i[1].split('/')[0]))
+        iplist.append('{0:8}{1}'.format(i[-1], i[1].split('/')[0]))
     return iplist
 
 
 def format_w():
-    w = subprocess.check_output(['w'], universal_newlines=True)
+    w = output(['w'], universal_newlines=True)
     lin = w.splitlines()
     lis = lin[2:]
     lis.insert(0, lin[0])
@@ -45,7 +193,7 @@ def parse_mem():
         RED = '\033[1;31m'
         S = '\033[0m'
 
-    mem = subprocess.check_output(['free', '-m'], universal_newlines=True)
+    mem = output(['free', '-m'], universal_newlines=True)
     mem = mem.splitlines()
     totals = mem[1].split()
     b_c = mem[2].split()
@@ -53,48 +201,57 @@ def parse_mem():
     usedmem = float(b_c[2])
     mempercent = usedmem / maxmem
     if mempercent > 0.7:
-        return '{}{} MB{}/{} MB'.format(bcolors.RED,
-                                        usedmem,
-                                        bcolors.S,
-                                        maxmem)
+        return '{0}{1} MB{2}/{3} MB'.format(bcolors.RED,
+                                            usedmem,
+                                            bcolors.S,
+                                            maxmem)
     elif mempercent > 0.5:
-        return '{}{} MB{}/{} MB'.format(bcolors.YELLOW,
-                                        usedmem,
-                                        bcolors.S,
-                                        maxmem)
+        return '{0}{1} MB{2}/{3} MB'.format(bcolors.YELLOW,
+                                            usedmem,
+                                            bcolors.S,
+                                            maxmem)
     else:
-        return '{}{} MB{}/{} MB'.format(bcolors.GREEN,
-                                        usedmem,
-                                        bcolors.S,
-                                        maxmem)
+        return '{0}{1} MB{2}/{3} MB'.format(bcolors.GREEN,
+                                            usedmem,
+                                            bcolors.S,
+                                            maxmem)
 
 
 def regex_ns(a):
     a = a.split()
-    r = list()
-    local_port = re.match(r'.+:(.*)', a[4])
-    r.append(local_port.groups()[0])
-    remote_port = re.match(r'.+:(.*)', a[5])
-    r.append(remote_port.groups()[0])
-    return r
+    ret = list()
+    # if len(a) == 5
+    local_port = re.match('.+:(.*)', a[4])
+    ret.append(local_port.groups()[0])
+    remote_port = re.match('.+:(.*)', a[5])
+    ret.append(remote_port.groups()[0])
+    return ret
 
 
 def parse_netstat():
-    ssutn = subprocess.check_output(['ss', '-utn'], universal_newlines=True)
-    ss = re.findall(r'tcp.*', ssutn, flags=re.M)
+    ssutn = output(['ss', '-utn'], universal_newlines=True)
+    ss = re.findall('tcp.*', ssutn, flags=re.M)
     ss = [regex_ns(x) for x in ss]
     _nin = [x[0] for x in ss]
     _nout = [x[1] for x in ss]
 
-    return collections.Counter(_nin), collections.Counter(_nout)
+    return Counter(_nin), Counter(_nout)
 
 
 def format_ns(n=3):
     a = parse_netstat()
-    out = a[0].most_common(n)
-    nin = a[1].most_common(n)
-    outlist = ['      {:7<} {:8>}'.format(y, x) for x, y in out]
-    ninlist = ['      {:7<} {:8>}'.format(y, x) for x, y in nin]
+    if n < (len(a[0]) - 1):
+        out = a[0].most_common(n)
+    else:
+        out = a[0].most_common(len(a[0]) - 1)
+
+    if n < (len(a[1]) - 1):
+        nin = a[1].most_common(n)
+    else:
+        nin = a[1].most_common(len(a[1]) - 1)
+
+    outlist = ['      {0:7<} {1:8>}'.format(y, x) for x, y in out]
+    ninlist = ['      {0:7<} {1:8>}'.format(y, x) for x, y in nin]
     return outlist, ninlist
 
 
@@ -105,28 +262,28 @@ def format_ss_proc_line(a):
     try:
         proc = a[5]
 
-        proc = re.sub(r'^users:\(\(', '', proc)
-        proc = re.sub(r'\)\)$', '', proc)
+        proc = re.sub('^users:\(\(', '', proc)
+        proc = re.sub('\)\)$', '', proc)
         proclist = proc.split('),(')
         if len(proclist) > 2:
-            procstring = '{}, {} (and {} more)'.format(proclist[0],
-                                                       proclist[1],
-                                                       len(proclist) - 2)
+            procstring = '{0}, {1} (and {2} more)'.format(proclist[0],
+                                                          proclist[1],
+                                                          len(proclist) - 2)
         elif len(proclist) == 2:
-            procstring = '{}, {}'.format(proclist[0],
-                                         proclist[1])
+            procstring = '{0}, {1}'.format(proclist[0],
+                                           proclist[1])
         else:
-            procstring = '{}'.format(proclist[0])
+            procstring = '{0}'.format(proclist[0])
     except:
         procstring = ''
 
-    return '{:21}{:>}{:>7} {}'.format(port, recv, send, procstring)
+    return '{0:21}{1:>}{2:>7} {3}'.format(port, recv, send, procstring)
 
 
 def format_ssntlp(m=2):
-    ssntlp = subprocess.check_output(['ss', '-plnt'], universal_newlines=True)
+    ssntlp = output(['ss', '-plnt'], universal_newlines=True)
     ssntlp = re.sub('"', '', ssntlp)
-    ssntlp = re.findall(r'^LISTEN.*', ssntlp, flags=re.M)
+    ssntlp = re.findall('^LISTEN.*', ssntlp, flags=re.M)
     return [format_ss_proc_line(x.split()) for x in ssntlp]
 
 
