@@ -102,12 +102,11 @@ def format_ss_proc_line(a):
     recv = a[1]
     send = a[2]
     port = a[3]
-    proc = a[5]
-
-    # proc.lstrip('users:((')
-    proc = re.sub(r'^users:\(\(', '', proc)
-    proc = re.sub(r'\)\)$', '', proc)
     try:
+        proc = a[5]
+
+        proc = re.sub(r'^users:\(\(', '', proc)
+        proc = re.sub(r'\)\)$', '', proc)
         proclist = proc.split('),(')
         if len(proclist) > 2:
             procstring = '{}, {} (and {} more)'.format(proclist[0],
