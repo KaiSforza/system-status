@@ -86,7 +86,7 @@ def parse_netstat():
     _nin = [x[0] for x in ss]
     _nout = [x[1] for x in ss]
 
-    return map(collections.Counter, [_nin, _nout])
+    return collections.Counter(_nin), collections.Counter(_nout)
 
 
 def format_ns(n=3):
