@@ -22,8 +22,8 @@ hostname = socket.gethostname()
 
 def parse_ip_output():
     ip = subprocess.check_output(['/sbin/ip', 'a'], universal_newlines=True)
-    rawips = re.findall('inet[ 6].+[0-9]$', ip, flags=re.M)
-    ips = [str.split(x) for x in rawips]
+    rawips = re.findall(r'(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
+    ips = [str.split(x[0]) for x in rawips]
     iplist = []
     for i in ips:
         iplist.append('{:8}{}'.format(i[-1], i[1].split('/')[0]))
