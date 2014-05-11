@@ -163,14 +163,18 @@ except:
             return result
 
 
-df = output(['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
-            universal_newlines=True)
-dfi = output(['df', '-i', '-x', 'tmpfs', '-x', 'devtmpfs'],
-             universal_newlines=True)
+def dfh():
+    return output(['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
+                  universal_newlines=True).splitlines()
 
-sss = output(['ss', '-s'], universal_newlines=True)
 
-hostname = socket.gethostname()
+def dfi():
+    return output(['df', '-i', '-x', 'tmpfs', '-x', 'devtmpfs'],
+                  universal_newlines=True).splitlines()
+
+
+def sss():
+    return output(['ss', '-s'], universal_newlines=True).splitlines()
 
 
 def parse_ip_output():
@@ -291,10 +295,11 @@ def format_ssntlp(m=2):
     ssntlp = re.findall('^LISTEN.*', ssntlp, flags=re.M)
     return [format_ss_proc_line(x.split()) for x in ssntlp]
 
+if __name__ == '__main__':
 
-ns = format_ns()
+    ns = format_ns()
 
-p = """{sep}
+    p = """{sep}
 Hostname: {host}
 {sep}
 {ipaddrs}
@@ -302,7 +307,9 @@ Hostname: {host}
 {wout}
 {sep}
 {fs}
-{inodes}{sep}
+
+{inodes}
+{sep}
 Memory Used: {memory}
 {sep}
 Connection Summary:
@@ -317,15 +324,15 @@ OUT (top 3)::
 Listening       Recv-Q Send-Q Processes
 {ssproc}
 {sep}""".format(sep=('-' * 75),
-                host=hostname,
+                host=socket.gethostname(),
                 ipaddrs='\n'.join(parse_ip_output()),
                 wout='\n'.join(format_w()),
-                fs=df,
-                inodes=dfi,
+                fs='\n'.join(dfh()),
+                inodes='\n'.join(dfi()),
                 memory=parse_mem(),
-                sssum='\n'.join(sss.splitlines()[:2]),
+                sssum='\n'.join(sss()[:2]),
                 nsin='\n'.join(ns[0]),
                 nsout='\n'.join(ns[1]),
                 ssproc='\n'.join(format_ssntlp()))
 
-print(p)
+    print(p)
