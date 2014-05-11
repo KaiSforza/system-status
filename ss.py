@@ -11,6 +11,9 @@ try:
         return check_output(*popenargs, **kwargs)
 
 except:
+    # Python 2.6 also does not have subprocess.check_output, so we're having to
+    # reinvent the wheel on this one, too. Code used from the Python 2.7 module
+    # once again.
     from subprocess import Popen, PIPE, CalledProcessError
 
     def output(*popenargs, **kwargs):
@@ -33,6 +36,8 @@ import re
 try:
     from collections import Counter
 except:
+    # Python 2.6 does not have the collections.Counter class. This is copied
+    # from the Python 2.7 collections module.
     from operator import itemgetter as _itemgetter
     import heapq as _heapq
     from itertools import (
