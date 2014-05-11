@@ -210,20 +210,20 @@ def parse_mem():
     usedmem = float(b_c[2])
     mempercent = usedmem / maxmem
     if mempercent > 0.7:
-        return '{0}{1} MB{2}/{3} MB'.format(bcolors.RED,
-                                            usedmem,
-                                            bcolors.S,
-                                            maxmem)
+        return '{0}{1:,} MB{2:,}/{3} MB'.format(bcolors.RED,
+                                                usedmem,
+                                                bcolors.S,
+                                                maxmem)
     elif mempercent > 0.5:
-        return '{0}{1} MB{2}/{3} MB'.format(bcolors.YELLOW,
-                                            usedmem,
-                                            bcolors.S,
-                                            maxmem)
+        return '{0}{1:,} MB{2}/{3:,} MB'.format(bcolors.YELLOW,
+                                                usedmem,
+                                                bcolors.S,
+                                                maxmem)
     else:
-        return '{0}{1} MB{2}/{3} MB'.format(bcolors.GREEN,
-                                            usedmem,
-                                            bcolors.S,
-                                            maxmem)
+        return '{0}{1:,} MB{2}/{3:,} MB'.format(bcolors.GREEN,
+                                                usedmem,
+                                                bcolors.S,
+                                                maxmem)
 
 
 def __regex_ns(a):
