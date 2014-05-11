@@ -226,7 +226,7 @@ def parse_mem():
                                             maxmem)
 
 
-def regex_ns(a):
+def __regex_ns(a):
     a = a.split()
     ret = list()
     # if len(a) == 5
@@ -237,10 +237,10 @@ def regex_ns(a):
     return ret
 
 
-def parse_netstat():
+def __parse_netstat():
     ssutn = output(['ss', '-utn'], universal_newlines=True)
     ss = re.findall('tcp.*', ssutn, flags=re.M)
-    ss = [regex_ns(x) for x in ss]
+    ss = [__regex_ns(x) for x in ss]
     _nin = [x[0] for x in ss]
     _nout = [x[1] for x in ss]
 
@@ -248,7 +248,7 @@ def parse_netstat():
 
 
 def format_ns(n=3):
-    a = parse_netstat()
+    a = __parse_netstat()
     if n < (len(a[0]) - 1):
         out = a[0].most_common(n)
     else:
@@ -264,7 +264,7 @@ def format_ns(n=3):
     return outlist, ninlist
 
 
-def format_ss_proc_line(a):
+def __format_ss_proc_line(a):
     recv = a[1]
     send = a[2]
     port = a[3]
@@ -293,7 +293,8 @@ def format_ssntlp(m=2):
     ssntlp = output(['ss', '-plnt'], universal_newlines=True)
     ssntlp = re.sub('"', '', ssntlp)
     ssntlp = re.findall('^LISTEN.*', ssntlp, flags=re.M)
-    return [format_ss_proc_line(x.split()) for x in ssntlp]
+    return [__format_ss_proc_line(x.split()) for x in ssntlp]
+
 
 if __name__ == '__main__':
 
