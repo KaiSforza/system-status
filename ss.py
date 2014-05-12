@@ -191,23 +191,38 @@ def parse_ip_output():
     return iplist
 
 
-def __parse_utmp(_utmp):
-    _fmt = "hi32s4s32s256sii2i4l"  # 20s"
-    #       ||  | |  |   ||| | |       ^ 20 byte string for unused portion
-    #       ||  | |  |   ||| | |         This doesnt seem to be used, though.
-    #       ||  | |  |   ||| | ^--- 4 byte long for address
-    #       ||  | |  |   ||| ^---- 2 32-byte long ints for time stuffs
-    #       ||  | |  |   ||^------ Session (32 length int, int32_t)
-    #       ||  | |  |   |^------- exit status (unsigned int)
-    #       ||  | |  |   ^-------- Hostname (UT_HOSTNAMESIZE chars, def 256)
-    #       ||  | |  ^------------ User (UT_NAMESIZE chars, defaults to 32)
-    #       ||  | ^--------------- ID (4 length char)
-    #       ||  ^----------------- Line (UT_LINESIZE chars, defaults to 32)
-    #       |^-------------------- PID (int)
-    #       ^--------------------- Type of record (short)
-    _fieldnames = ["type", "PID", "Line", "ID", "User", "Hostname",
-                   "exit_status", "session", "time_s", "time_ms",
-                   "addrv4_1", "addrv4_2", "addrv4_3", "addrv4_4"]
+def parse_utmp(_utmp='/var/run/utmp',
+               _fmt="hi32s4s32s256sii2i16s20s",
+               _fieldnames=["type", "PID", "Line", "ID", "User",
+                            "Hostname", "exit_status", "session",
+                            "time_s", "time_ms", "addr", "unused"]):
+    '''
+    Parse the UTMP file.
+    This is mostly a test to see that it could be done, and how to do it, so
+    use at your own risk. _fmt is set up for linux systems, but can be
+    overridden.
+
+    The specific format is outlined below.
+
+    Arguments:
+        utmp -- the utmp file to read. Defaults to '/var/run/utmp'
+        _fmt -- "hi32s4s32s256sii2i16s20s"
+                 ||  | |  |   ||| | |  ^ 20 empty bits that are reserved for
+                 ||  | |  |   ||| | |    future use
+                 ||  | |  |   ||| | ^--- 4 ints for address, but this does not
+                 ||  | |  |   ||| |      seem to work correctly with ints
+                 ||  | |  |   ||| ^----- 2 32-byte long ints for time stuffs
+                 ||  | |  |   ||^------- Session (32 length int, int32_t)
+                 ||  | |  |   |^-------- exit status (unsigned int)
+                 ||  | |  |   ^--------- Hostname(UT_HOSTNAMESIZE chars, 256)
+                 ||  | |  ^------------- User (UT_NAMESIZE chars, 32)
+                 ||  | ^---------------- ID (4 length char)
+                 ||  ^------------------ Line (UT_LINESIZE chars, 32)
+                 |^--------------------- PID (int)
+                 ^---------------------- Type of record (short)
+        _filednames -- The field names defined in the _fmt string.
+
+    '''
     _fmt_len = struct.calcsize(_fmt)
     _filesize = os.path.getsize(_utmp)
 
@@ -223,15 +238,10 @@ def __parse_utmp(_utmp):
                           struct.unpack(_fmt, utmp[
                               (_fmt_len * ind):(_fmt_len * (ind + 1))]))
         user_dict = dict((x, y) for x, y in _raw_fields)
-        if user_dict['type'] == 7:
-            user_dict['addrv4'] = '{0}.{1}.{2}.{3}'.format(
-                user_dict['addrv4_1'],
-                user_dict['addrv4_2'],
-                user_dict['addrv4_3'],
-                user_dict['addrv4_4'])
-            users.append(user_dict)
+        user_dict.addr_split = struct.unpack('16c', user_dict['addr'])
+        users.append(user_dict)
 
-    return(users)
+    return users
 
 
 def format_w():
@@ -246,12 +256,7 @@ def format_w():
     hruptime = str(timedelta(seconds=int(uptime[0].split('.')[0])))
 
     # Uses utmp to find the logged in users
-    utmpvalues = __parse_utmp('/var/run/utmp')
-
-    with open('/proc/cpuinfo', 'r') as cpuinfofile:
-        cpuinfo = cpuinfofile.read()
-    bogomips = re.findall(r'^bogomips.+$', cpuinfo, flags=re.M)
-    bogomips = float(bogomips[0].split()[2])
+    utmpvalues = parse_utmp('/var/run/utmp')
 
     # Get the time format things
     date = time.strftime(
