@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
-# import argparse
-
 from __future__ import division
+from __future__ import with_statement
+
+import struct
+import os
+import time
+import socket
+import re
+from datetime import timedelta
 
 try:
     from subprocess import check_output
@@ -30,8 +36,6 @@ except:
             raise CalledProcessError(retcode, cmd, output=output)
         return output
 
-import socket
-import re
 
 try:
     from collections import Counter
@@ -187,12 +191,125 @@ def parse_ip_output():
     return iplist
 
 
+def __parse_utmp(_utmp):
+    _fmt = "hi32s4s32s256sii2i4l"  # 20s"
+    #       ||  | |  |   ||| | |       ^ 20 byte string for unused portion
+    #       ||  | |  |   ||| | |         This doesnt seem to be used, though.
+    #       ||  | |  |   ||| | ^--- 4 byte long for address
+    #       ||  | |  |   ||| ^---- 2 32-byte long ints for time stuffs
+    #       ||  | |  |   ||^------ Session (32 length int, int32_t)
+    #       ||  | |  |   |^------- exit status (unsigned int)
+    #       ||  | |  |   ^-------- Hostname (UT_HOSTNAMESIZE chars, def 256)
+    #       ||  | |  ^------------ User (UT_NAMESIZE chars, defaults to 32)
+    #       ||  | ^--------------- ID (4 length char)
+    #       ||  ^----------------- Line (UT_LINESIZE chars, defaults to 32)
+    #       |^-------------------- PID (int)
+    #       ^--------------------- Type of record (short)
+    _fieldnames = ["type", "PID", "Line", "ID", "User", "Hostname",
+                   "exit_status", "session", "time_s", "time_ms",
+                   "addrv4_1", "addrv4_2", "addrv4_3", "addrv4_4"]
+    _fmt_len = struct.calcsize(_fmt)
+    _filesize = os.path.getsize(_utmp)
+
+    with open(_utmp, 'rb') as utmpfile:
+        utmp = utmpfile.read()
+
+    _entries = _filesize // _fmt_len
+
+    users = []
+
+    for ind in range(_entries):
+        _raw_fields = zip(_fieldnames,
+                          struct.unpack(_fmt, utmp[
+                              (_fmt_len * ind):(_fmt_len * (ind + 1))]))
+        user_dict = dict((x, y) for x, y in _raw_fields)
+        if user_dict['type'] in {7, }:
+            user_dict['addrv4'] = '{0}.{1}.{2}.{3}'.format(
+                user_dict['addrv4_1'],
+                user_dict['addrv4_2'],
+                user_dict['addrv4_3'],
+                user_dict['addrv4_4'])
+            users.append(user_dict)
+
+    return(users)
+
+
 def format_w():
-    w = output(['w'], universal_newlines=True)
-    lin = w.splitlines()
-    lis = lin[2:]
-    lis.insert(0, lin[0])
-    return lis
+
+    # Set up the load average status
+    with open('/proc/loadavg', 'r') as loadfile:
+        loadavg = loadfile.read().split()
+
+    # Sets up our uptime readings
+    with open('/proc/uptime', 'r') as upfile:
+        uptime = upfile.read().split()
+    hruptime = str(timedelta(seconds=int(uptime[0].split('.')[0])))
+
+    # Uses utmp to find the logged in users
+    utmpvalues = __parse_utmp('/var/run/utmp')
+
+    with open('/proc/cpuinfo', 'r') as cpuinfofile:
+        cpuinfo = cpuinfofile.read()
+    bogomips = re.findall(r'^bogomips.+$', cpuinfo, flags=re.M)
+    bogomips = float(bogomips[0].split()[2])
+
+    # Get the time format things
+    date = time.strftime(
+        '%H:%M:%S', time.localtime(time.time()))
+
+    finallist = []
+    finallist.append(
+        ' {date} up {_uptime}, {usrs} user, load average: {loadavgs}'.format(
+            date=date,
+            _uptime=hruptime,
+            usrs=len(utmpvalues),
+            loadavgs=', '.join(loadavg[0:3])))
+    # finallist.append('USER     TTY        LOGIN@    IDLE   JCPU   PCPU WHAT')
+    finallist.append('USER     TTY        LOGIN@            WHAT')
+    for user in utmpvalues:
+        # We need to get data for the user process that is in the utmp file
+        with open('/proc/{0}/stat'.format(user['PID'])) as procstatfile:
+            procstat = procstatfile.read().split()
+        # Get the process start time of the login process
+        procstarttime = float(procstat[23])
+        logintime = (
+            (time.time() - float(uptime[0])) + (procstarttime / bogomips))
+        # TODO: Get cpu time for child processes using the proc/PID/stat file
+
+        # Get the first child proc of this login. Should be the first PID to
+        # have the tty file open.
+        lsof = map('/proc/{0}'.format, range(int(user['PID']), 32768))
+        usertty = user['Line'].decode().rstrip('\x00')
+        child_pid = None
+        # This is so ugly...
+        for i in lsof:
+            try:
+                dirlist = os.listdir('{0}/fd'.format(i))
+                for j in dirlist:
+                        p = os.path.join(i, 'fd', j)
+                        if (os.readlink(p) == os.path.join('/dev', usertty)):
+                            child_pid = os.path.split(i)[1]
+                            break
+            except:
+                child_pid = child_pid
+
+        with open('/proc/{0}/comm'.format(child_pid)) as commfile:
+            cproc = commfile.readlines()[0]
+
+        finallist.append(
+            '{User:9}{Line:11}{login:18}{what}'.format(
+                User=user['User'].decode().rstrip('\x00'),
+                Line=user['Line'].decode().rstrip('\x00'),
+                login=time.strftime('%Y/%m/%d %H:%M',
+                                    time.localtime(logintime)),
+                what=cproc))
+
+    # w = output(['w'], universal_newlines=True)
+    # lin = w.splitlines()
+    # lis = lin[2:]
+    # lis.insert(0, lin[0])
+    # return lis
+    return finallist
 
 
 def parse_mem():
