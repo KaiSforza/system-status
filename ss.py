@@ -369,29 +369,45 @@ def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
                                                     bcolors.S,
                                                     totalmb)
 
-def __regex_ns(a):
+
+def __regex_ss(a):
+    '''
+    Splits up the ss ports and IP's.
+    Return a tuple of (local port, remote port)
+    '''
     a = a.split()
-    ret = list()
     # if len(a) == 5
-    local_port = re.match('.+:(.*)', a[4])
-    ret.append(local_port.groups()[0])
-    remote_port = re.match('.+:(.*)', a[5])
-    ret.append(remote_port.groups()[0])
-    return ret
+    local_port = re.match('.+:([^:]*$)', a[4])
+    remote_port = re.match('.+:([^:]*$)', a[5])
+    return local_port.groups()[0], remote_port.groups()[0]
 
 
-def __parse_netstat():
+def __parse_ssutn():
+    '''
+    Private function used by format_ssutn thta actually runs the 'ss' command.
+    Does the 'sort | uniq -c' part of the old shell script using the
+    collections.Counter class.
+    '''
     ssutn = output(['ss', '-utn'], universal_newlines=True)
-    ss = re.findall('tcp.*', ssutn, flags=re.M)
-    ss = [__regex_ns(x) for x in ss]
+    # Remove the header from the output.
+    ss = ssutn.splitlines()[1:]
+    # Run a list comprehension on the ss list and return a tuple of (in, out).
+    ss = [__regex_ss(x) for x in ss]
     _nin = [x[0] for x in ss]
     _nout = [x[1] for x in ss]
 
     return Counter(_nin), Counter(_nout)
 
 
-def format_ns(n=3):
-    a = __parse_netstat()
+def format_ssutn(n=3):
+    '''
+    Print out the number of out and in sockets that are open in a pair of
+    columns, similar to what a '| sort | uniq -n | sort -r' would get you.
+    Takes a number, n, as input, defaulting to 3.
+
+    Returns the 'n' most common sockets.
+    '''
+    a = __parse_ssutn()
     if n < (len(a[0]) - 1):
         out = a[0].most_common(n)
     else:
@@ -441,7 +457,7 @@ def format_ssntlp(m=2):
 
 if __name__ == '__main__':
 
-    ns = format_ns()
+    ssutn = format_ssutn()
     meminfo = parse_mem()
 
     p = """{sep}
@@ -480,8 +496,8 @@ Listening       Recv-Q Send-Q Processes
                 memory=format_mem(meminfo),
                 swap=format_swap(meminfo),
                 sssum='\n'.join(sss()[:2]),
-                nsin='\n'.join(ns[0]),
-                nsout='\n'.join(ns[1]),
+                nsin='\n'.join(ssutn[0]),
+                nsout='\n'.join(ssutn[1]),
                 ssproc='\n'.join(format_ssntlp()))
 
     print(p)
