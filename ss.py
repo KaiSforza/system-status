@@ -202,28 +202,42 @@ def parse_mem():
         RED = '\033[1;31m'
         S = '\033[0m'
 
-    mem = output(['free', '-m'], universal_newlines=True)
-    mem = mem.splitlines()
-    totals = mem[1].split()
-    b_c = mem[2].split()
-    maxmem = float(totals[1])
-    usedmem = float(b_c[2])
-    mempercent = usedmem / maxmem
+    with open('/proc/meminfo', 'r') as memfile:
+        meminfo = memfile.read()
+
+    meminfo = meminfo.splitlines()
+    meminfo = [x.split() for x in meminfo]
+    memdict = dict((x[0], x[1]) for x in meminfo)
+
+    total = int(memdict['MemTotal:'])
+    free = int(memdict['MemFree:'])
+    buffers = int(memdict['Buffers:'])
+    cache = int(memdict['Cached:'])
+
+    memused = total - free  # total used memory in kb
+
+    memused = memused - (buffers + cache)  # Remove the buffers and cache
+
+    mempercent = memused / total
+
+    totalmb = total / 1024
+    memusedmb = memused / 1024
+
     if mempercent > 0.7:
-        return '{0}{1:,} MB{2:,}/{3} MB'.format(bcolors.RED,
-                                                usedmem,
-                                                bcolors.S,
-                                                maxmem)
+        return '{0}{1:,.1f} MB{2:,.1f}/{3} MB'.format(bcolors.RED,
+                                                      memusedmb,
+                                                      bcolors.S,
+                                                      totalmb)
     elif mempercent > 0.5:
-        return '{0}{1:,} MB{2}/{3:,} MB'.format(bcolors.YELLOW,
-                                                usedmem,
-                                                bcolors.S,
-                                                maxmem)
+        return '{0}{1:,.1f} MB{2}/{3:,.1f} MB'.format(bcolors.YELLOW,
+                                                      memusedmb,
+                                                      bcolors.S,
+                                                      totalmb)
     else:
-        return '{0}{1:,} MB{2}/{3:,} MB'.format(bcolors.GREEN,
-                                                usedmem,
-                                                bcolors.S,
-                                                maxmem)
+        return '{0}{1:,.1f} MB{2}/{3:,.1f} MB'.format(bcolors.GREEN,
+                                                      memusedmb,
+                                                      bcolors.S,
+                                                      totalmb)
 
 
 def __regex_ns(a):
