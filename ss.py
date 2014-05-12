@@ -284,12 +284,14 @@ def format_w():
         # This is so ugly...
         for i in lsof:
             try:
-                dirlist = os.listdir('{0}/fd'.format(i))
-                for j in dirlist:
-                        p = os.path.join(i, 'fd', j)
-                        if (os.readlink(p) == os.path.join('/dev', usertty)):
-                            child_pid = os.path.split(i)[1]
-                            break
+                if not os.path.split(i)[1] == os.getpid():
+                    dirlist = os.listdir('{0}/fd'.format(i))
+                    for j in dirlist:
+                            p = os.path.join(i, 'fd', j)
+                            if (os.readlink(p) ==
+                                    os.path.join('/dev', usertty)):
+                                child_pid = os.path.split(i)[1]
+                                break
             except:
                 child_pid = child_pid
 
