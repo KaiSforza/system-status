@@ -223,7 +223,7 @@ def __parse_utmp(_utmp):
                           struct.unpack(_fmt, utmp[
                               (_fmt_len * ind):(_fmt_len * (ind + 1))]))
         user_dict = dict((x, y) for x, y in _raw_fields)
-        if user_dict['type'] in {7, }:
+        if user_dict['type'] == 7:
             user_dict['addrv4'] = '{0}.{1}.{2}.{3}'.format(
                 user_dict['addrv4_1'],
                 user_dict['addrv4_2'],
