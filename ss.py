@@ -269,53 +269,11 @@ def format_w():
             _uptime=hruptime,
             usrs=len(utmpvalues),
             loadavgs=', '.join(loadavg[0:3])))
-    # finallist.append('USER     TTY        LOGIN@    IDLE   JCPU   PCPU WHAT')
-    finallist.append('USER     TTY        LOGIN@            WHAT')
-    for user in utmpvalues:
-        # We need to get data for the user process that is in the utmp file
-        with open('/proc/{0}/stat'.format(user['PID'])) as procstatfile:
-            procstat = procstatfile.read().split()
-        # Get the process start time of the login process
-        procstarttime = float(procstat[23])
-        logintime = (
-            (time.time() - float(uptime[0])) + (procstarttime / bogomips))
-        # TODO: Get cpu time for child processes using the proc/PID/stat file
 
-        # Get the first child proc of this login. Should be the first PID to
-        # have the tty file open.
-        lsof = map('/proc/{0}'.format, range(int(user['PID']), 32768))
-        usertty = user['Line'].decode().rstrip('\x00')
-        child_pid = None
-        # This is so ugly...
-        for i in lsof:
-            try:
-                if not os.path.split(i)[1] == os.getpid():
-                    dirlist = os.listdir('{0}/fd'.format(i))
-                    for j in dirlist:
-                            p = os.path.join(i, 'fd', j)
-                            if (os.readlink(p) ==
-                                    os.path.join('/dev', usertty)):
-                                child_pid = os.path.split(i)[1]
-                                break
-            except:
-                child_pid = child_pid
-
-        with open('/proc/{0}/comm'.format(child_pid)) as commfile:
-            cproc = commfile.readlines()[0]
-
-        finallist.append(
-            '{User:9}{Line:11}{login:18}{what}'.format(
-                User=user['User'].decode().rstrip('\x00'),
-                Line=user['Line'].decode().rstrip('\x00'),
-                login=time.strftime('%Y/%m/%d %H:%M',
-                                    time.localtime(logintime)),
-                what=cproc))
-
-    # w = output(['w'], universal_newlines=True)
-    # lin = w.splitlines()
-    # lis = lin[2:]
-    # lis.insert(0, lin[0])
-    # return lis
+    # cut off w's uptime and stuff
+    w = output(['w'], universal_newlines=True)
+    lin = w.splitlines()
+    finallist.extend(lin[1:])
     return finallist
 
 
