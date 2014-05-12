@@ -178,6 +178,9 @@ def df(args=[]):
 
 
 def sss():
+    '''
+    Get the output of 'ss -s', a summary of the sockets.
+    '''
     return output(['ss', '-s'], universal_newlines=True).splitlines()
 
 
@@ -457,6 +460,10 @@ def format_ssutn(n=3):
 
 
 def __format_ss_proc_line(a):
+    '''
+    Private function to get a pretty formatted 'ss -ntlp' output. Takes a line
+    of 'ss -ntlp' output as input, returns a formatted string.
+    '''
     recv = a[1]
     send = a[2]
     port = a[3]
@@ -482,6 +489,10 @@ def __format_ss_proc_line(a):
 
 
 def format_ssntlp(m=2):
+    '''
+    Gets the 'ss -ntlp' output and formats it correctly, as per the
+    __format_ss_proc_line() function
+    '''
     ssntlp = output(['ss', '-plnt'], universal_newlines=True)
     ssntlp = re.sub('"', '', ssntlp)
     ssntlp = re.findall('^LISTEN.*', ssntlp, flags=re.M)
