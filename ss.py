@@ -181,8 +181,8 @@ def sss():
     return output(['ss', '-s'], universal_newlines=True).splitlines()
 
 
-def parse_ip_output():
-    ip = output(['/sbin/ip', 'a'], universal_newlines=True)
+def parse_ip_output(ip='/sbin/ip'):
+    ip = output([ip, 'a'], universal_newlines=True)
     rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
     ips = [str.split(x[0]) for x in rawips]
     iplist = []
