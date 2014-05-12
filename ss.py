@@ -278,23 +278,40 @@ def format_w():
 
 
 def parse_mem():
-    class bcolors:
-        GREEN = '\033[1;32m'
-        YELLOW = '\033[1;33m'
-        RED = '\033[1;31m'
-        S = '\033[0m'
-
+    '''
+    Parse /proc/meminfo and print out the memory used.
+    Creates a dictionary with the /proc/meminfo names as keys and the values as
+    values.
+    '''
+    # Open up /proc/meminfo and then assign it to a variable.
     with open('/proc/meminfo', 'r') as memfile:
         meminfo = memfile.read()
 
+    # Split up the meminfo file
     meminfo = meminfo.splitlines()
+    # Split on whitespace. Gives us 3 fields for almost everything except for
+    # the HubePages counts.
     meminfo = [x.split() for x in meminfo]
-    memdict = dict((x[0], x[1]) for x in meminfo)
+    # Create a dictionary
+    return dict((x[0][0:-1], x[1]) for x in meminfo)
 
-    total = int(memdict['MemTotal:'])
-    free = int(memdict['MemFree:'])
-    buffers = int(memdict['Buffers:'])
-    cache = int(memdict['Cached:'])
+
+class bcolors:
+    GREEN = '\033[1;32m'
+    YELLOW = '\033[1;33m'
+    RED = '\033[1;31m'
+    S = '\033[0m'
+
+
+def format_mem(memdict, memerr=0.7, memwarn=0.5):
+    '''
+    Format the memory we get from parse_mem(). Two optional arguments, memerr
+    and memwarn set the threshold for error and warning colors.
+    '''
+    total = int(memdict['MemTotal'])
+    free = int(memdict['MemFree'])
+    buffers = int(memdict['Buffers'])
+    cache = int(memdict['Cached'])
 
     memused = total - free  # total used memory in kb
 
@@ -305,12 +322,12 @@ def parse_mem():
     totalmb = total / 1024
     memusedmb = memused / 1024
 
-    if mempercent > 0.7:
+    if mempercent > memerr:
         return '{0}{1:.1f} MB{2:.1f}/{3} MB'.format(bcolors.RED,
                                                     memusedmb,
                                                     bcolors.S,
                                                     totalmb)
-    elif mempercent > 0.5:
+    elif mempercent > memwarn:
         return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.YELLOW,
                                                     memusedmb,
                                                     bcolors.S,
@@ -321,6 +338,36 @@ def parse_mem():
                                                     bcolors.S,
                                                     totalmb)
 
+
+def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
+    total = int(memdict['SwapTotal'])
+    free = int(memdict['SwapFree'])
+
+    swapused = total - free  # total used swapory in kb
+
+    try:
+        swappercent = swapused / total
+    except:
+        swappercent = 0
+
+    totalmb = total / 1024
+    swapusedmb = swapused / 1024
+
+    if swappercent > swaperr:
+        return '{0}{1:.1f} MB{2:.1f}/{3} MB'.format(bcolors.RED,
+                                                    swapusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
+    elif swappercent > swapwarn:
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.YELLOW,
+                                                    swapusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
+    else:
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.GREEN,
+                                                    swapusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
 
 def __regex_ns(a):
     a = a.split()
@@ -395,6 +442,7 @@ def format_ssntlp(m=2):
 if __name__ == '__main__':
 
     ns = format_ns()
+    meminfo = parse_mem()
 
     p = """{sep}
 Hostname: {host}
@@ -408,6 +456,7 @@ Hostname: {host}
 {inodes}
 {sep}
 Memory Used: {memory}
+Swap status: {swap}
 {sep}
 Connection Summary:
 {sssum}
@@ -424,11 +473,12 @@ Listening       Recv-Q Send-Q Processes
                 host=socket.gethostname(),
                 ipaddrs='\n'.join(parse_ip_output()),
                 wout='\n'.join(format_w()),
-                memory=parse_mem(),
                 fs='\n'.join(
                     df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 inodes='\n'.join(
                     df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
+                memory=format_mem(meminfo),
+                swap=format_swap(meminfo),
                 sssum='\n'.join(sss()[:2]),
                 nsin='\n'.join(ns[0]),
                 nsout='\n'.join(ns[1]),
