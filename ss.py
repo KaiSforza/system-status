@@ -177,11 +177,12 @@ def df(args=[]):
     return output(dfcmd, universal_newlines=True).splitlines()
 
 
-def sss():
+def ss():
     '''
-    Get the output of 'ss -s', a summary of the sockets.
+    Get the output of 'ss -utnapss', all of the output used by the functions
+    below.
     '''
-    return output(['ss', '-s'], universal_newlines=True).splitlines()
+    return output(['ss', '-utnaps'], universal_newlines=True).splitlines()
 
 
 def parse_ip_output(ip='/sbin/ip'):
@@ -418,24 +419,23 @@ def __regex_ss(a):
     return local_port.groups()[0], remote_port.groups()[0]
 
 
-def __parse_ssutn():
+def __parse_ssutn(sslist):
     '''
     Private function used by format_ssutn thta actually runs the 'ss' command.
     Does the 'sort | uniq -c' part of the old shell script using the
     collections.Counter class.
     '''
-    ssutn = output(['ss', '-utn'], universal_newlines=True)
     # Remove the header from the output.
-    ss = ssutn.splitlines()[1:]
+    ss = sslist[12:]
     # Run a list comprehension on the ss list and return a tuple of (in, out).
-    ss = [__regex_ss(x) for x in ss]
+    ss = [__regex_ss(x) for x in ss if re.match('^(tcp|udp) +ESTAB', x)]
     _nin = [x[0] for x in ss]
     _nout = [x[1] for x in ss]
 
     return Counter(_nin), Counter(_nout)
 
 
-def format_ssutn(n=3):
+def format_ssutn(sslist, n=3):
     '''
     Print out the number of out and in sockets that are open in a pair of
     columns, similar to what a '| sort | uniq -n | sort -r' would get you.
@@ -443,7 +443,7 @@ def format_ssutn(n=3):
 
     Returns the 'n' most common sockets.
     '''
-    a = __parse_ssutn()
+    a = __parse_ssutn(sslist)
     if n < (len(a[0]) - 1):
         out = a[0].most_common(n)
     else:
@@ -464,11 +464,11 @@ def __format_ss_proc_line(a):
     Private function to get a pretty formatted 'ss -ntlp' output. Takes a line
     of 'ss -ntlp' output as input, returns a formatted string.
     '''
-    recv = a[1]
-    send = a[2]
-    port = a[3]
+    recv = a[2]
+    send = a[3]
+    port = a[4]
     try:
-        proc = a[5]
+        proc = a[6]
 
         proc = re.sub('^users:\(\(', '', proc)
         proc = re.sub('\)\)$', '', proc)
@@ -488,20 +488,19 @@ def __format_ss_proc_line(a):
     return '{0:21}{1:>}{2:>7} {3}'.format(port, recv, send, procstring)
 
 
-def format_ssntlp(m=2):
+def format_ssntlp(sslist, m=2):
     '''
     Gets the 'ss -ntlp' output and formats it correctly, as per the
     __format_ss_proc_line() function
     '''
-    ssntlp = output(['ss', '-plnt'], universal_newlines=True)
-    ssntlp = re.sub('"', '', ssntlp)
-    ssntlp = re.findall('^LISTEN.*', ssntlp, flags=re.M)
+    ssntlp = [x for x in sslist if re.match('^(tcp|udp) +LISTEN.*', x)]
     return [__format_ss_proc_line(x.split()) for x in ssntlp]
 
 
 if __name__ == '__main__':
 
-    ssutn = format_ssutn()
+    sslist = ss()
+    ssutn = format_ssutn(sslist)
     meminfo = parse_mem()
 
     p = """{sep}
@@ -539,9 +538,9 @@ Listening       Recv-Q Send-Q Processes
                     df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 memory=format_mem(meminfo),
                 swap=format_swap(meminfo),
-                sssum='\n'.join(sss()[:2]),
+                sssum='\n'.join(sslist[:2]),
                 nsin='\n'.join(ssutn[0]),
                 nsout='\n'.join(ssutn[1]),
-                ssproc='\n'.join(format_ssntlp()))
+                ssproc='\n'.join(format_ssntlp(sslist)))
 
     print(p)
