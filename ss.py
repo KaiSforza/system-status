@@ -341,20 +341,20 @@ def parse_mem():
     memusedmb = memused / 1024
 
     if mempercent > 0.7:
-        return '{0}{1:,.1f} MB{2:,.1f}/{3} MB'.format(bcolors.RED,
-                                                      memusedmb,
-                                                      bcolors.S,
-                                                      totalmb)
+        return '{0}{1:.1f} MB{2:.1f}/{3} MB'.format(bcolors.RED,
+                                                    memusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
     elif mempercent > 0.5:
-        return '{0}{1:,.1f} MB{2}/{3:,.1f} MB'.format(bcolors.YELLOW,
-                                                      memusedmb,
-                                                      bcolors.S,
-                                                      totalmb)
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.YELLOW,
+                                                    memusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
     else:
-        return '{0}{1:,.1f} MB{2}/{3:,.1f} MB'.format(bcolors.GREEN,
-                                                      memusedmb,
-                                                      bcolors.S,
-                                                      totalmb)
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.GREEN,
+                                                    memusedmb,
+                                                    bcolors.S,
+                                                    totalmb)
 
 
 def __regex_ns(a):
