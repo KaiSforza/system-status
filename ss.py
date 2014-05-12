@@ -167,14 +167,14 @@ except:
             return result
 
 
-def dfh():
-    return output(['df', '-h', '-x', 'tmpfs', '-x', 'devtmpfs'],
-                  universal_newlines=True).splitlines()
-
-
-def dfi():
-    return output(['df', '-i', '-x', 'tmpfs', '-x', 'devtmpfs'],
-                  universal_newlines=True).splitlines()
+def df(args=[]):
+    '''
+    Simply returns the output of a 'df' command and splits the lines into a
+    list. Uses universal_newlines to write it out into a string, not bytes.
+    '''
+    dfcmd = ['df']
+    dfcmd.extend(args)
+    return output(dfcmd, universal_newlines=True).splitlines()
 
 
 def sss():
@@ -424,9 +424,11 @@ Listening       Recv-Q Send-Q Processes
                 host=socket.gethostname(),
                 ipaddrs='\n'.join(parse_ip_output()),
                 wout='\n'.join(format_w()),
-                fs='\n'.join(dfh()),
-                inodes='\n'.join(dfi()),
                 memory=parse_mem(),
+                fs='\n'.join(
+                    df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
+                inodes='\n'.join(
+                    df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 sssum='\n'.join(sss()[:2]),
                 nsin='\n'.join(ns[0]),
                 nsout='\n'.join(ns[1]),
