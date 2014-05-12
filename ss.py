@@ -195,7 +195,8 @@ def parse_utmp(_utmp='/var/run/utmp',
                _fmt="hi32s4s32s256sii2i16s20s",
                _fieldnames=["type", "PID", "Line", "ID", "User",
                             "Hostname", "exit_status", "session",
-                            "time_s", "time_ms", "addr", "unused"]):
+                            "time_s", "time_ms", "addr", "unused"],
+               _force=False):
     '''
     Parse the UTMP file.
     This is mostly a test to see that it could be done, and how to do it, so
@@ -221,26 +222,48 @@ def parse_utmp(_utmp='/var/run/utmp',
                  |^--------------------- PID (int)
                  ^---------------------- Type of record (short)
         _filednames -- The field names defined in the _fmt string.
+        _force -- Force parsing even if we don't have a sane utmp file or _fmt
+                  string
 
     '''
+    # Get the length of the format string specified.
     _fmt_len = struct.calcsize(_fmt)
+    # Filesize in bytes of the _utmp file. Should be a multiple of _fmt_len.
     _filesize = os.path.getsize(_utmp)
 
+    # We can't reliably parse a file with a length not equal to the format
+    # length. Raise an exception if we can't parse it correctly before moving
+    # forward.
+    if not (_filesize % _fmt_len == 0 and not _force):
+        raise Exception(
+            "{0} is either corrupt or the format string is wrong.".format(
+                _utmp)
+        )
+
+    # Read the utmp file and write it into a variable so we can close the file
+    # as fast as possible.
     with open(_utmp, 'rb') as utmpfile:
         utmp = utmpfile.read()
 
+    # Get a number of entries in the utmp file.
     _entries = _filesize // _fmt_len
 
+    # Initialize the users list.
     users = []
 
+    # Walk through the utmp file, unpacking as we go.
     for ind in range(_entries):
+        # When we unpack we are going to create a dictionary from the output,
+        # using the values defined in the _fieldnames variable.
         _raw_fields = zip(_fieldnames,
                           struct.unpack(_fmt, utmp[
                               (_fmt_len * ind):(_fmt_len * (ind + 1))]))
+        # Build the dictionary using dictionary comprehension.
         user_dict = dict((x, y) for x, y in _raw_fields)
-        user_dict.addr_split = struct.unpack('16c', user_dict['addr'])
+        # Add the dictionary to the users list
         users.append(user_dict)
 
+    # The uses list is going to be what is used, so return it.
     return users
 
 
