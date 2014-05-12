@@ -182,10 +182,20 @@ def sss():
 
 
 def parse_ip_output(ip='/sbin/ip'):
+    '''
+    Gets the sbin/ip command. On systems where the binary does not reside in
+    /sbin/ip, it is almost always available via a symbolic link of /sbin
+    /usr/bin.
+    '''
     ip = output([ip, 'a'], universal_newlines=True)
+    # Grabs either 1 or 2 lines (usually) per interface: one for ipv4 (has a
+    # number at the end) and an ipv6 address (has 'global ' at the end).
     rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
-    ips = [str.split(x[0]) for x in rawips]
+    # Takes each match and splits it on the whitespace.
+    ips = [x[0].split() for x in rawips]
+    # Set up list of ips.
     iplist = []
+    # Run through all of the IP addresses and format them.
     for i in ips:
         iplist.append('{0:8}{1}'.format(i[-1], i[1].split('/')[0]))
     return iplist
