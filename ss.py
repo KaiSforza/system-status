@@ -236,12 +236,23 @@ def parse_ip_output(ip='/sbin/ip'):
     return iplist
 
 
+def __strip(x, y='\x00', ign='addr'):
+    try:
+        if x[0] != ign:
+            return x[0], x[1].decode().strip(y)
+        else:
+            return x[0], x[1]
+    except:
+        return x[0], x[1]
+
+
 def parse_utmp(_utmp='/var/run/utmp',
                _fmt="hi32s4s32s256sii2i16s20s",
                _fieldnames=["type", "PID", "Line", "ID", "User",
                             "Hostname", "exit_status", "session",
                             "time_s", "time_ms", "addr", "unused"],
-               _force=False):
+               _force=False,
+               _clean=True):
     '''
     Parse the UTMP file.
     This is mostly a test to see that it could be done, and how to do it, so
@@ -269,6 +280,8 @@ def parse_utmp(_utmp='/var/run/utmp',
         _filednames -- The field names defined in the _fmt string.
         _force -- Force parsing even if we don't have a sane utmp file or _fmt
                   string
+        _clean -- Remove '\x00' from the strings. May create some empty
+                  strings. Does not affect the 'addr' field.
 
     '''
     # Get the length of the format string specified.
@@ -304,6 +317,8 @@ def parse_utmp(_utmp='/var/run/utmp',
                           struct.unpack(_fmt, utmp[
                               (_fmt_len * ind):(_fmt_len * (ind + 1))]))
         # Build the dictionary using dictionary comprehension.
+        if _clean:
+            _raw_fields = map(__strip, _raw_fields)
         user_dict = dict((x, y) for x, y in _raw_fields)
         # Add the dictionary to the users list
         users.append(user_dict)
