@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+# Verify that tests work, but only the changes made in the index.
+_setup() {
+  git stash save --keep-index -q "__COMMITSTASH__"
+}
+
+_bad_cleanup() {
+  git stash pop
+  exit 1
+}
+_cleanup() {
+  git stash pop -q
+}
+
+trap _bad_cleanup ERR
+
+_setup
+python -m unittest discover
+python2 -m unittest discover
+_cleanup
