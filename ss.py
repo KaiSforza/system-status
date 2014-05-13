@@ -167,6 +167,13 @@ except:
             return result
 
 
+class bcolors:
+    GREEN = '\033[1;32m'
+    YELLOW = '\033[1;33m'
+    RED = '\033[1;31m'
+    S = '\033[0m'
+
+
 def df(args=[]):
     '''
     Simply returns the output of a 'df' command and splits the lines into a
@@ -183,6 +190,30 @@ def ss():
     below.
     '''
     return output(['ss', '-utnaps'], universal_newlines=True).splitlines()
+
+
+def type_df(x):
+    x = x.split()
+    percent = x[4].strip('%')
+    if percent == '-':
+        col = ''
+    elif int(percent) > 90:
+        col = bcolors.RED
+    elif int(percent) > 75:
+        col = bcolors.YELLOW
+    else:
+        col = bcolors.GREEN
+    return col
+
+
+def format_df(args=[]):
+    rawdf = df(args)
+    cld = ['{0}{1}{2}'.format(type_df(x), x, bcolors.S)
+           for x in rawdf if x.startswith('/')]
+    header = rawdf[0]
+    ret = [header]
+    ret.extend(cld)
+    return ret
 
 
 def parse_ip_output(ip='/sbin/ip'):
@@ -331,13 +362,6 @@ def parse_mem():
     meminfo = [x.split() for x in meminfo]
     # Create a dictionary
     return dict((x[0][0:-1], x[1]) for x in meminfo)
-
-
-class bcolors:
-    GREEN = '\033[1;32m'
-    YELLOW = '\033[1;33m'
-    RED = '\033[1;31m'
-    S = '\033[0m'
 
 
 def format_mem(memdict, memerr=0.7, memwarn=0.5):
@@ -533,9 +557,9 @@ Listening       Recv-Q Send-Q Processes
                 ipaddrs='\n'.join(parse_ip_output()),
                 wout='\n'.join(format_w()),
                 fs='\n'.join(
-                    df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
+                    format_df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 inodes='\n'.join(
-                    df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
+                    format_df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 memory=format_mem(meminfo),
                 swap=format_swap(meminfo),
                 sssum='\n'.join(sslist[:2]),
