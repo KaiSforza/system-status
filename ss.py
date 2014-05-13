@@ -340,6 +340,7 @@ def format_w():
 
     # Uses utmp to find the logged in users
     utmpvalues = parse_utmp('/var/run/utmp')
+    utmpvalues = [x for x in utmpvalues if x['type'] == 7]
 
     # Get the time format things
     date = time.strftime(
