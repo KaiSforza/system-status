@@ -55,16 +55,13 @@ MemAvailable:    5763740 kB'''
     ssutn = (['      3 55151', '      2 42337', '      1 46661'],
              ['      3 993', '      2 7700', '      1 5127'])
 
-
-
-
-
     def test_type_df(self):
         '''Make sure that type_df returns the correct values'''
-        self.assertEqual(ss.type_df(self.dfout_okay), ss.bcolors.GREEN)
-        self.assertEqual(ss.type_df(self.dfout_warn), ss.bcolors.YELLOW)
-        self.assertEqual(ss.type_df(self.dfout_err), ss.bcolors.RED)
-        self.assertEqual(ss.type_df(self.dfout_noinode), '')
+        for i in ((self.dfout_okay, ss.bcolors.GREEN),
+                  (self.dfout_warn, ss.bcolors.YELLOW),
+                  (self.dfout_err, ss.bcolors.RED),
+                  (self.dfout_noinode, '')):
+            self.assertEqual(ss.type_df(i[0]), i[1])
 
     def test_parse_ip_output(self):
         '''We should get the correct output from parse_ip_output'''
@@ -73,14 +70,11 @@ MemAvailable:    5763740 kB'''
 
     def test_strip(self):
         '''Make sure we correctly strip bytes'''
-        self.assertEqual(ssstrip(('a', b'\x01\x00')),
-                         ('a', '\x01'))
-        self.assertEqual(ssstrip(('a', b'\x01\x00'), ign='a'),
-                         ('a', b'\x01\x00'))
-        self.assertEqual(ssstrip(('a', b'\x01\x00'), y='\x02'),
-                         ('a', '\x01\x00'))
-        self.assertEqual(ssstrip(('a', b'\x01\x02'), y='\x02'),
-                         ('a', '\x01'))
+        for s in ((('a', b'\x01\x00'), '\x00', 'b', ('a', '\x01')),
+                  (('a', b'\x01\x00'), '\x00', 'a', ('a', b'\x01\x00')),
+                  (('a', b'\x01\x00'), '\x02', 'b', ('a', '\x01\x00')),
+                  (('a', b'\x01\x02'), '\x02', 'b', ('a', '\x01'))):
+            self.assertEqual(ssstrip(s[0], y=s[1], ign=s[2]), s[3])
 
     def test_parse_mem(self):
         '''Parse different things in /proc/meminfo right'''
