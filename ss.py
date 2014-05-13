@@ -208,8 +208,8 @@ def type_df(x):
 
 def format_df(args=[]):
     rawdf = df(args)
-    cld = ['{0}{1}{2}'.format(type_df(x), x, bcolors.S)
-           for x in rawdf if x.startswith('/')]
+    cld = ('{0}{1}{2}'.format(type_df(x), x, bcolors.S)
+           for x in rawdf if x.startswith('/'))
     header = rawdf[0]
     ret = [header]
     ret.extend(cld)
@@ -227,13 +227,9 @@ def parse_ip_output(ip='/sbin/ip'):
     # number at the end) and an ipv6 address (has 'global ' at the end).
     rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
     # Takes each match and splits it on the whitespace.
-    ips = [x[0].split() for x in rawips]
-    # Set up list of ips.
-    iplist = []
+    ips = (x[0].split() for x in rawips)
     # Run through all of the IP addresses and format them.
-    for i in ips:
-        iplist.append('{0:8}{1}'.format(i[-1], i[1].split('/')[0]))
-    return iplist
+    return ('{0:8}{1}'.format(i[-1], i[1].split('/')[0]) for i in ips)
 
 
 def __strip(x, y='\x00', ign='addr'):
@@ -375,7 +371,7 @@ def parse_mem():
     meminfo = meminfo.splitlines()
     # Split on whitespace. Gives us 3 fields for almost everything except for
     # the HubePages counts.
-    meminfo = [x.split() for x in meminfo]
+    meminfo = (x.split() for x in meminfo)
     # Create a dictionary
     return dict((x[0][0:-1], x[1]) for x in meminfo)
 
@@ -469,8 +465,8 @@ def __parse_ssutn(sslist):
     ss = sslist[12:]
     # Run a list comprehension on the ss list and return a tuple of (in, out).
     ss = [__regex_ss(x) for x in ss if re.match('^(tcp|udp) +ESTAB', x)]
-    _nin = [x[0] for x in ss]
-    _nout = [x[1] for x in ss]
+    _nin = (x[0] for x in ss)
+    _nout = (x[1] for x in ss)
 
     return Counter(_nin), Counter(_nout)
 
@@ -531,10 +527,10 @@ def __format_ss_proc_line(a):
 def format_ssntlp(sslist, m=2):
     '''
     Gets the 'ss -ntlp' output and formats it correctly, as per the
-    __format_ss_proc_line() function
+    __format_ss_proc_line() function. Returns a generator, not a list.
     '''
-    ssntlp = [x for x in sslist if re.match('^(tcp|udp) +LISTEN.*', x)]
-    return [__format_ss_proc_line(x.split()) for x in ssntlp]
+    ssntlp = (x for x in sslist if re.match('^(tcp|udp) +LISTEN.*', x))
+    return (__format_ss_proc_line(x.split()) for x in ssntlp)
 
 
 if __name__ == '__main__':
