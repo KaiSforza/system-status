@@ -216,13 +216,16 @@ def format_df(args=[]):
     return ret
 
 
-def parse_ip_output(ip='/sbin/ip'):
+def run_ip(ip='/sbin/ip'):
+    return output([ip, 'a'], universal_newlines=True)
+
+
+def parse_ip_output(ip):
     '''
     Gets the sbin/ip command. On systems where the binary does not reside in
     /sbin/ip, it is almost always available via a symbolic link of /sbin
     /usr/bin.
     '''
-    ip = output([ip, 'a'], universal_newlines=True)
     # Grabs either 1 or 2 lines (usually) per interface: one for ipv4 (has a
     # number at the end) and an ipv6 address (has 'global ' at the end).
     rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
@@ -323,20 +326,19 @@ def parse_utmp(_utmp='/var/run/utmp',
     return users
 
 
-def format_w():
+def __get_file(f):
+    with open(f, 'r') as xf:
+        return xf.read()
 
-    # Set up the load average status
-    with open('/proc/loadavg', 'r') as loadfile:
-        loadavg = loadfile.read().split()
 
-    # Sets up our uptime readings
-    with open('/proc/uptime', 'r') as upfile:
-        uptime = upfile.read().split()
+def format_w(loadavg, uptime, utmp):
+    loadavg = loadavg.split()
+    uptime = uptime.split()
     hruptime = str(timedelta(seconds=int(uptime[0].split('.')[0])))
 
     # Uses utmp to find the logged in users
-    utmpvalues = parse_utmp('/var/run/utmp')
-    utmpvalues = [x for x in utmpvalues if x['type'] == 7]
+    # utmpvalues = parse_utmp('/var/run/utmp')
+    utmpvalues = [x for x in utmp if x['type'] == 7]
 
     # Get the time format things
     date = time.strftime(
@@ -357,21 +359,16 @@ def format_w():
     return finallist
 
 
-def parse_mem():
+def parse_mem(m):
     '''
     Parse /proc/meminfo and print out the memory used.
     Creates a dictionary with the /proc/meminfo names as keys and the values as
     values.
     '''
-    # Open up /proc/meminfo and then assign it to a variable.
-    with open('/proc/meminfo', 'r') as memfile:
-        meminfo = memfile.read()
-
-    # Split up the meminfo file
-    meminfo = meminfo.splitlines()
+    m = m.splitlines()
     # Split on whitespace. Gives us 3 fields for almost everything except for
     # the HubePages counts.
-    meminfo = (x.split() for x in meminfo)
+    meminfo = (x.split() for x in m)
     # Create a dictionary
     return dict((x[0][0:-1], x[1]) for x in meminfo)
 
@@ -455,14 +452,14 @@ def __regex_ss(a):
     return local_port.groups()[0], remote_port.groups()[0]
 
 
-def __parse_ssutn(sslist):
+def __parse_ssutn(sslist, header=12):
     '''
     Private function used by format_ssutn thta actually runs the 'ss' command.
     Does the 'sort | uniq -c' part of the old shell script using the
     collections.Counter class.
     '''
     # Remove the header from the output.
-    ss = sslist[12:]
+    ss = sslist[header:]
     # Run a list comprehension on the ss list and return a tuple of (in, out).
     ss = [__regex_ss(x) for x in ss if re.match('^(tcp|udp) +ESTAB', x)]
     _nin = (x[0] for x in ss)
@@ -471,7 +468,7 @@ def __parse_ssutn(sslist):
     return Counter(_nin), Counter(_nout)
 
 
-def format_ssutn(sslist, n=3):
+def format_ssutn(sslist, n=3, header=12):
     '''
     Print out the number of out and in sockets that are open in a pair of
     columns, similar to what a '| sort | uniq -n | sort -r' would get you.
@@ -479,13 +476,13 @@ def format_ssutn(sslist, n=3):
 
     Returns the 'n' most common sockets.
     '''
-    a = __parse_ssutn(sslist)
-    if n < (len(a[0]) - 1):
+    a = __parse_ssutn(sslist, header=header)
+    if n <= (len(a[0])):
         out = a[0].most_common(n)
     else:
         out = a[0].most_common(len(a[0]) - 1)
 
-    if n < (len(a[1]) - 1):
+    if n <= (len(a[1])):
         nin = a[1].most_common(n)
     else:
         nin = a[1].most_common(len(a[1]) - 1)
@@ -537,7 +534,11 @@ if __name__ == '__main__':
 
     sslist = ss()
     ssutn = format_ssutn(sslist)
-    meminfo = parse_mem()
+    me = __get_file('/proc/meminfo')
+    meminfo = parse_mem(me)
+    la = __get_file('/proc/loadavg')
+    up = __get_file('/proc/uptime')
+    ut = parse_utmp('/var/run/utmp')
 
     p = """{sep}
 Hostname: {host}
@@ -566,8 +567,8 @@ Listening       Recv-Q Send-Q Processes
 {ssproc}
 {sep}""".format(sep=('-' * 75),
                 host=socket.gethostname(),
-                ipaddrs='\n'.join(parse_ip_output()),
-                wout='\n'.join(format_w()),
+                ipaddrs='\n'.join(parse_ip_output(run_ip())),
+                wout='\n'.join(format_w(la, up, ut)),
                 fs='\n'.join(
                     format_df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
                 inodes='\n'.join(
