@@ -9,7 +9,7 @@
 
 # Verify that tests work, but only the changes made in the index.
 _setup() {
-  git stash save --keep-index -q "__COMMITSTASH__"
+  git stash save --keep-index -q "__PRECOMMITSTASH__"
 }
 
 _bad_cleanup() {
@@ -20,7 +20,7 @@ _cleanup() {
   git stash pop -q
 }
 
-trap _bad_cleanup ERR
+trap _bad_cleanup ERR HUP INT
 
 _setup
 python -m unittest discover
