@@ -6,8 +6,7 @@ Simple tests for some of the functions in the ss.py script
 
 import unittest
 import ss
-from ss import (__strip as ssstrip,
-                __get_file as ssget_file)
+from ss import __strip as ssstrip
 
 
 class TestSystemStatus(unittest.TestCase):
