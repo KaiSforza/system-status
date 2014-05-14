@@ -223,8 +223,7 @@ def type_df(x):
     return col
 
 
-def format_df(args=[]):
-    rawdf = df(args)
+def format_df(rawdf):
     cld = ('{0}{1}{2}'.format(type_df(x), x, bcolors.S)
            for x in rawdf if x.startswith('/'))
     header = rawdf[0]
@@ -556,6 +555,8 @@ if __name__ == '__main__':
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
     ut = parse_utmp('/var/run/utmp')
+    dfh = df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
+    dfi = df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
 
     p = """{sep}
 Hostname: {host}
@@ -586,10 +587,8 @@ Listening       Recv-Q Send-Q Processes
                 host=socket.gethostname(),
                 ipaddrs='\n'.join(parse_ip_output(run_ip())),
                 wout='\n'.join(format_w(la, up, ut)),
-                fs='\n'.join(
-                    format_df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])),
-                inodes='\n'.join(
-                    format_df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])),
+                fs='\n'.join(format_df(dfh)),
+                inodes='\n'.join(format_df(dfi)),
                 memory=format_mem(meminfo),
                 swap=format_swap(meminfo),
                 sssum='\n'.join(sslist[:2]),
