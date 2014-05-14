@@ -393,7 +393,7 @@ def format_mem(memdict, memerr=0.7, memwarn=0.5):
     memusedmb = memused / 1024
 
     if mempercent > memerr:
-        return '{0}{1:.1f} MB{2:.1f}/{3} MB'.format(bcolors.RED,
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.RED,
                                                     memusedmb,
                                                     bcolors.S,
                                                     totalmb)
@@ -424,7 +424,7 @@ def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
     swapusedmb = swapused / 1024
 
     if swappercent > swaperr:
-        return '{0}{1:.1f} MB{2:.1f}/{3} MB'.format(bcolors.RED,
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.RED,
                                                     swapusedmb,
                                                     bcolors.S,
                                                     totalmb)
