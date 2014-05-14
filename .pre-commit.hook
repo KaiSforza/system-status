@@ -6,6 +6,7 @@ _setup() {
 }
 
 _bad_cleanup() {
+  echo "!!! FAIL! !!!"
   git stash pop
   exit 1
 }
@@ -15,14 +16,19 @@ _cleanup() {
 
 trap _bad_cleanup ERR HUP INT
 
+echo "==> Saving the un-indexed changes..."
 _setup
+echo "===> Running tests with python 3..."
 python3 -m unittest discover
+echo "===> Running tests with python 2..."
 python2 -m unittest discover
 
-echo "Running ss.py with python 3..."
+echo "===> Running ss.py with python 3..."
 python3 ss.py >/dev/null
-echo "Running ss.py with python 2..."
+echo "===> Running ss.py with python 2..."
 python2 ss.py >/dev/null
-echo "Running ss.sh..."
+echo "===> Running ss.sh..."
 bash ss.sh >/dev/null
+echo "==> Cleaning up using stash..."
 _cleanup
+echo "=!= Done!"
