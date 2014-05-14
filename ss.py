@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+'''
+System Status Script
+
+This script is a simple status script that can be run on a server to get some
+information about the system. It should generally be run as a root user, though
+everything will still function when run as an unprivileged user. It contains
+functions for parsing files such a /proc/meminfo, /run/utmp, and others.
+
+There is also a simple test suite distributed with this repository, as well as
+a bash version of this script, though it is much shorter and more rudimentary.
+
+When run as a script it will show you a nicely printed output.
+
+This script is compatible with python >= 2.6 and python 3.
+'''
+
+
 from __future__ import division
 from __future__ import with_statement
 
