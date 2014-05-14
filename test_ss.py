@@ -103,6 +103,10 @@ MemAvailable:    5763740 kB'''
         self.assertEqual(ss.format_ssutn(self.ssout, header=2),
                          self.ssutn)
 
+    # TODO: parse_utmp tests
+    # TODO: format_w tests (makes extensive use of time.*)
+    # TODO: format_mem and format_swap tests
+
 
 if __name__ == '__main__':
     unittest.main()
