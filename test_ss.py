@@ -65,7 +65,7 @@ MemAvailable:    5763740 kB'''
              ['      3 993', '      2 7700', '      1 5127'])
 
     def test_type_df(self):
-        '''Make sure that type_df returns the correct values'''
+        'Make sure that type_df returns the correct values'
         for i in ((self.dfout_okay, ss.bcolors.GREEN),
                   (self.dfout_warn, ss.bcolors.YELLOW),
                   (self.dfout_err, ss.bcolors.RED),
@@ -101,7 +101,6 @@ MemAvailable:    5763740 kB'''
     def test_sssumm(self):
         self.assertEqual(ss.format_ssutn(self.ssout, header=2),
                          self.ssutn)
-
 
 
 if __name__ == '__main__':
