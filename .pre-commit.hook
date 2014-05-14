@@ -16,6 +16,13 @@ _cleanup() {
 trap _bad_cleanup ERR HUP INT
 
 _setup
-python -m unittest discover
+python3 -m unittest discover
 python2 -m unittest discover
+
+echo "Running ss.py with python 3..."
+python3 ss.py >/dev/null
+echo "Running ss.py with python 2..."
+python2 ss.py >/dev/null
+echo "Running ss.sh..."
+bash ss.sh >/dev/null
 _cleanup
