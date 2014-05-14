@@ -21,7 +21,6 @@ from __future__ import division
 from __future__ import with_statement
 
 import struct
-import os
 import time
 import socket
 import re
@@ -184,11 +183,22 @@ except:
             return result
 
 
+
+# Exceptions:
+class utmpLengthError(Exception):
+    pass
+
+
 class bcolors:
     GREEN = '\033[1;32m'
     YELLOW = '\033[1;33m'
     RED = '\033[1;31m'
     S = '\033[0m'
+
+
+def __get_file(f, m='r'):
+    with open(f, m) as xf:
+        return xf.read()
 
 
 def df(args=[]):
@@ -261,7 +271,7 @@ def __strip(x, y='\x00', ign='addr'):
         return x[0], x[1]
 
 
-def parse_utmp(_utmp='/var/run/utmp',
+def parse_utmp(utmp,
                _fmt="hi32s4s32s256sii2i16s20s",
                _fieldnames=["type", "PID", "Line", "ID", "User",
                             "Hostname", "exit_status", "session",
@@ -277,7 +287,7 @@ def parse_utmp(_utmp='/var/run/utmp',
     The specific format is outlined below.
 
     Arguments:
-        utmp -- the utmp file to read. Defaults to '/var/run/utmp'
+        utmp -- The utmp bytes to read.
         _fmt -- "hi32s4s32s256sii2i16s20s"
                  ||  | |  |   ||| | |  ^ 20 empty bits that are reserved for
                  ||  | |  |   ||| | |    future use
@@ -302,21 +312,15 @@ def parse_utmp(_utmp='/var/run/utmp',
     # Get the length of the format string specified.
     _fmt_len = struct.calcsize(_fmt)
     # Filesize in bytes of the _utmp file. Should be a multiple of _fmt_len.
-    _filesize = os.path.getsize(_utmp)
+    _filesize = len(utmp)
 
     # We can't reliably parse a file with a length not equal to the format
     # length. Raise an exception if we can't parse it correctly before moving
     # forward.
     if not (_filesize % _fmt_len == 0 and not _force):
-        raise Exception(
-            "{0} is either corrupt or the format string is wrong.".format(
-                _utmp)
+        raise utmpLengthError(
+            "The utmp bytes are either corrupt or the format string is wrong."
         )
-
-    # Read the utmp file and write it into a variable so we can close the file
-    # as fast as possible.
-    with open(_utmp, 'rb') as utmpfile:
-        utmp = utmpfile.read()
 
     # Get a number of entries in the utmp file.
     _entries = _filesize // _fmt_len
@@ -340,11 +344,6 @@ def parse_utmp(_utmp='/var/run/utmp',
 
     # The uses list is going to be what is used, so return it.
     return users
-
-
-def __get_file(f):
-    with open(f, 'r') as xf:
-        return xf.read()
 
 
 def format_w(loadavg, uptime, utmp):
@@ -554,9 +553,10 @@ if __name__ == '__main__':
     meminfo = parse_mem(me)
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
-    ut = parse_utmp('/var/run/utmp')
     dfh = df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
     dfi = df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
+    uts = __get_file('/var/run/utmp', 'rb')
+    ut = parse_utmp(uts)
 
     p = """{sep}
 Hostname: {host}
