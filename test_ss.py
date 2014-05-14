@@ -15,6 +15,15 @@ class TestSystemStatus(unittest.TestCase):
     dfout_err = '/dev/sda1      124780544 14392492 105078100  99% /'
     dfout_noinode = '/dev/sda1            0     0       0     - /home'
 
+    dfout = ['Filesystem      Size  Used Avail Use% Mounted on',
+        dfout_okay, dfout_warn, dfout_err]
+
+    dfout_correct = [
+        'Filesystem      Size  Used Avail Use% Mounted on',
+        '\x1b[1;32m/dev/sda1      124780544 14392492 105078100  13% /\x1b[0m',
+        '\x1b[1;33m/dev/sda1      124780544 14392492 105078100  85% /\x1b[0m',
+        '\x1b[1;31m/dev/sda1      124780544 14392492 105078100  99% /\x1b[0m']
+
     ipoutput = '''2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
     link/ether bc:76:4e:20:1b:a7 brd ff:ff:ff:ff:ff:ff
     inet 162.242.212.101/24 brd 162.242.212.255 scope global eth0
@@ -62,6 +71,10 @@ MemAvailable:    5763740 kB'''
                   (self.dfout_err, ss.bcolors.RED),
                   (self.dfout_noinode, '')):
             self.assertEqual(ss.type_df(i[0]), i[1])
+
+    def test_format_df(self):
+        'This runs the type_df stuff, but make sure the full output is okay'
+        self.assertEqual(ss.format_df(self.dfout), self.dfout_correct)
 
     def test_parse_ip_output(self):
         '''We should get the correct output from parse_ip_output'''
