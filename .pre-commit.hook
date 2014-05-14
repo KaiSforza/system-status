@@ -19,9 +19,9 @@ trap _bad_cleanup ERR HUP INT
 echo "==> Saving the un-indexed changes..."
 _setup
 echo "===> Running tests with python 3..."
-python3 -m unittest discover
+python3 test_*.py
 echo "===> Running tests with python 2..."
-python2 -m unittest discover
+python2 test_*.py
 
 echo "===> Running ss.py with python 3..."
 python3 ss.py >/dev/null
