@@ -98,7 +98,8 @@ MemAvailable:    5763740 kB'''
         self.assertEqual(list(ss.format_ssntlp(self.ssout)),
                          self.ssntlp)
 
-    def test_sssumm(self):
+    def test_ssutn(self):
+        '''Test ss -ntu output formatting'''
         self.assertEqual(ss.format_ssutn(self.ssout, header=2),
                          self.ssutn)
 
