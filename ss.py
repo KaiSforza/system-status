@@ -519,11 +519,12 @@ def __format_ss_proc_line(a):
         proc = re.sub('^users:\(\(', '', proc)
         proc = re.sub('\)\)$', '', proc)
         proclist = proc.split('),(')
-        if len(proclist) > 2:
+        proclen = len(proclist)
+        if proclen > 2:
             procstring = '{0}, {1} (and {2} more)'.format(proclist[0],
                                                           proclist[1],
-                                                          len(proclist) - 2)
-        elif len(proclist) == 2:
+                                                          proclen - 2)
+        elif proclen == 2:
             procstring = '{0}, {1}'.format(proclist[0],
                                            proclist[1])
         else:
