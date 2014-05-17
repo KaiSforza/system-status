@@ -455,16 +455,14 @@ def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
                                                     totalmb)
 
 
-def __regex_ss(a):
+def __regex_ss(a, n):
     '''
     Splits up the ss ports and IP's.
-    Return a tuple of (local port, remote port)
+    Return a list of ports
     '''
     a = a.split()
     # if len(a) == 5
-    local_port = re.match('.+:([^:]*$)', a[4])
-    remote_port = re.match('.+:([^:]*$)', a[5])
-    return local_port.groups()[0], remote_port.groups()[0]
+    return re.match('.+:([^:]*$)', a[n]).groups()[0]
 
 
 def __parse_ssutn(sslist, header=12):
@@ -476,9 +474,10 @@ def __parse_ssutn(sslist, header=12):
     # Remove the header from the output.
     ss = sslist[header:]
     # Run a list comprehension on the ss list and return a tuple of (in, out).
-    ss = [__regex_ss(x) for x in ss if re.match('^(tcp|udp) +ESTAB', x)]
-    _nin = (x[0] for x in ss)
-    _nout = (x[1] for x in ss)
+    _nin = (__regex_ss(x, 4) for x in ss
+            if re.match('^(tcp|udp) +ESTAB', x))
+    _nout = (__regex_ss(x, 5) for x in ss
+             if re.match('^(tcp|udp) +ESTAB', x))
 
     return Counter(_nin), Counter(_nout)
 
@@ -495,16 +494,15 @@ def format_ssutn(sslist, n=3, header=12):
     if n <= (len(a[0])):
         out = a[0].most_common(n)
     else:
-        out = a[0].most_common(len(a[0]) - 1)
+        out = a[0].most_common(len(a[0]))
 
     if n <= (len(a[1])):
         nin = a[1].most_common(n)
     else:
-        nin = a[1].most_common(len(a[1]) - 1)
+        nin = a[1].most_common(len(a[1]))
 
-    outlist = ['      {0:7<} {1:8>}'.format(y, x) for x, y in out]
-    ninlist = ['      {0:7<} {1:8>}'.format(y, x) for x, y in nin]
-    return outlist, ninlist
+    return (('      {0:7<} {1:8>}'.format(y, x) for x, y in out),
+            ('      {0:7<} {1:8>}'.format(y, x) for x, y in nin))
 
 
 def __format_ss_proc_line(a):
