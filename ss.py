@@ -545,8 +545,7 @@ def format_ssntlp(sslist, m=2):
     return (__format_ss_proc_line(x.split()) for x in ssntlp)
 
 
-if __name__ == '__main__':
-
+def main():
     sslist = ss()
     ssutn = format_ssutn(sslist)
     me = __get_file('/proc/meminfo')
@@ -596,4 +595,7 @@ Listening       Recv-Q Send-Q Processes
                 nsout='\n'.join(ssutn[1]),
                 ssproc='\n'.join(format_ssntlp(sslist)))
 
-    print(p)
+    return p
+
+if __name__ == '__main__':
+    print(main())
