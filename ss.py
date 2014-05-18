@@ -29,7 +29,8 @@ from datetime import timedelta
 try:
     from subprocess import check_output
 
-    def output(*popenargs, **kwargs):
+    def __output(*popenargs, **kwargs):
+        '''Returns the output of a subprocess'''
         return check_output(*popenargs, **kwargs)
 
 except:
@@ -38,7 +39,8 @@ except:
     # once again.
     from subprocess import Popen, PIPE, CalledProcessError
 
-    def output(*popenargs, **kwargs):
+    def __output(*popenargs, **kwargs):
+        '''Returns the output of a subprocess'''
         if 'stdout' in kwargs:
             raise ValueError(
                 'stdout argument not allowed, it will be overridden.')
@@ -208,7 +210,7 @@ def df(args=[]):
     '''
     dfcmd = ['df']
     dfcmd.extend(args)
-    return output(dfcmd, universal_newlines=True).splitlines()
+    return __output(dfcmd, universal_newlines=True).splitlines()
 
 
 def ss():
@@ -216,7 +218,7 @@ def ss():
     Get the output of 'ss -utnapss', all of the output used by the functions
     below.
     '''
-    return output(['ss', '-utnaps'], universal_newlines=True).splitlines()
+    return __output(['ss', '-utnaps'], universal_newlines=True).splitlines()
 
 
 def type_df(x):
@@ -243,7 +245,7 @@ def format_df(rawdf):
 
 
 def run_ip(ip='/sbin/ip'):
-    return output([ip, '-o', 'a'], universal_newlines=True)
+    return __output([ip, '-o', 'a'], universal_newlines=True)
 
 
 def parse_ip_output(ip):
@@ -368,7 +370,7 @@ def format_w(loadavg, uptime, utmp):
             loadavgs=', '.join(loadavg[0:3])))
 
     # cut off w's uptime and stuff
-    w = output(['w'], universal_newlines=True)
+    w = __output(['w'], universal_newlines=True)
     lin = w.splitlines()
     finallist.extend(lin[1:])
     return finallist
