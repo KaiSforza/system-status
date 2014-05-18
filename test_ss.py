@@ -77,15 +77,15 @@ MemAvailable:    5763740 kB'''
                   (self.dfout_warn, ss.bcolors.YELLOW),
                   (self.dfout_err, ss.bcolors.RED),
                   (self.dfout_noinode, '')):
-            self.assertEqual(ss.parse_df(i[0]), i[1])
+            self.assertEqual(ss._parse_df(i[0]), i[1])
 
     def test_format_df(self):
         'This runs the type_df stuff, but make sure the full output is okay'
         self.assertEqual(ss.format_df(self.dfout), self.dfout_correct)
 
-    def test_parse_ip_output(self):
+    def test_format_ip_output(self):
         '''We should get the correct output from parse_ip_output'''
-        self.assertEqual(list(ss.parse_ip_output(self.ipoutput)),
+        self.assertEqual(list(ss.format_ip_output(self.ipoutput)),
                          self.good_ip_out)
 
     def test_strip(self):
@@ -98,7 +98,7 @@ MemAvailable:    5763740 kB'''
 
     def test_parse_mem(self):
         '''Parse different things in /proc/meminfo right'''
-        self.assertEqual(ss.parse_mem(self.micromem), self.correctmem)
+        self.assertEqual(ss._parse_mem(self.micromem), self.correctmem)
 
     def test_ssproc(self):
         '''Get a correctly formatted proc list from ss input'''
@@ -113,13 +113,13 @@ MemAvailable:    5763740 kB'''
 
     def test_parse_utmp(self):
         '''Make sure utmp is working right'''
-        self.assertDictEqual(ss.parse_utmp(self.utmpbytes)[0],
+        self.assertDictEqual(ss._parse_utmp(self.utmpbytes)[0],
                              self.utmpdict)
 
     def test_parse_utmp_fail(self):
         '''Fail when the bytes are a bad length'''
         with self.assertRaises(ss.UtmpLengthError):
-            ss.parse_utmp(b'\x00\x01')
+            ss._parse_utmp(b'\x00\x01')
 
     # TODO: format_w tests (makes extensive use of time.*)
     # TODO: format_mem and format_swap tests

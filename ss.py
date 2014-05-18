@@ -225,7 +225,7 @@ def __ip(ip='/sbin/ip'):
     return __output([ip, '-o', 'a'], universal_newlines=True)
 
 
-def parse_df(x):
+def _parse_df(x):
     '''
     colors the 'df' output by percent used.
     '''
@@ -246,7 +246,7 @@ def format_df(rawdf):
     '''
     Formats the 'df' output after being colored by parse_df.
     '''
-    cld = ('{0}{1}{2}'.format(parse_df(x), x, bcolors.S)
+    cld = ('{0}{1}{2}'.format(_parse_df(x), x, bcolors.S)
            for x in rawdf if x.startswith('/'))
     header = rawdf[0]
     ret = [header]
@@ -254,7 +254,7 @@ def format_df(rawdf):
     return ret
 
 
-def parse_ip_output(ip):
+def format_ip_output(ip):
     '''
     Gets the sbin/ip command. On systems where the binary does not reside in
     /sbin/ip, it is almost always available via a symbolic link of /sbin
@@ -279,13 +279,13 @@ def __strip(x, y='\x00', ign='addr'):
         return x[0], x[1]
 
 
-def parse_utmp(utmp,
-               _fmt="hi32s4s32s256sii2i16s20s",
-               _fieldnames=["type", "PID", "Line", "ID", "User",
-                            "Hostname", "exit_status", "session",
-                            "time_s", "time_ms", "addr", "unused"],
-               _force=False,
-               _clean=True):
+def _parse_utmp(utmp,
+                _fmt="hi32s4s32s256sii2i16s20s",
+                _fieldnames=["type", "PID", "Line", "ID", "User",
+                             "Hostname", "exit_status", "session",
+                             "time_s", "time_ms", "addr", "unused"],
+                _force=False,
+                _clean=True):
     '''
     Parse the UTMP file.
     This is mostly a test to see that it could be done, and how to do it, so
@@ -386,7 +386,7 @@ def format_w(loadavg, uptime, utmp):
     return finallist
 
 
-def parse_mem(m):
+def _parse_mem(m):
     '''
     Parse /proc/meminfo and print out the memory used.
     Creates a dictionary with the /proc/meminfo names as keys and the values as
@@ -402,7 +402,7 @@ def parse_mem(m):
 
 def format_mem(memdict, memerr=0.7, memwarn=0.5):
     '''
-    Format the memory we get from parse_mem(). Two optional arguments, memerr
+    Format the memory we get from _parse_mem(). Two optional arguments, memerr
     and memwarn set the threshold for error and warning colors.
     '''
     total = int(memdict['MemTotal'])
@@ -438,7 +438,7 @@ def format_mem(memdict, memerr=0.7, memwarn=0.5):
 
 def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
     '''
-    Format the swap info we get from parse_mem().
+    Format the swap info we get from _parse_mem().
     Two optional arguments, swaperr and swapwarn set the threshold for error
     and warning colors.
     '''
@@ -482,7 +482,7 @@ def __regex_ss(a, n):
     return re.match('.+:([^:]*$)', a[n]).groups()[0]
 
 
-def parse_ssutn(sslist, header=12):
+def _parse_ssutn(sslist, header=12):
     '''
     Private function used by format_ssutn thta actually runs the 'ss' command.
     Does the 'sort | uniq -c' part of the old shell script using the
@@ -507,7 +507,7 @@ def format_ssutn(sslist, n=3, header=12):
 
     Returns the 'n' most common sockets.
     '''
-    a = parse_ssutn(sslist, header=header)
+    a = _parse_ssutn(sslist, header=header)
     if n <= (len(a[0])):
         out = a[0].most_common(n)
     else:
@@ -568,13 +568,13 @@ def main():
     sslist = __ss()
     ssutn = format_ssutn(sslist)
     me = __get_file('/proc/meminfo')
-    meminfo = parse_mem(me)
+    meminfo = _parse_mem(me)
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
     dfh = __df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
     dfi = __df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
     uts = __get_file('/var/run/utmp', 'rb')
-    ut = parse_utmp(uts)
+    ut = _parse_utmp(uts)
 
     p = """{sep}
 Hostname: {host}
@@ -603,7 +603,7 @@ Listening       Recv-Q Send-Q Processes
 {ssproc}
 {sep}""".format(sep=('-' * 75),
                 host=socket.gethostname(),
-                ipaddrs='\n'.join(parse_ip_output(__ip())),
+                ipaddrs='\n'.join(format_ip_output(__ip())),
                 wout='\n'.join(format_w(la, up, ut)),
                 fs='\n'.join(format_df(dfh)),
                 inodes='\n'.join(format_df(dfi)),
