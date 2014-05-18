@@ -127,14 +127,21 @@ MemAvailable:    5763740 kB'''
 
 if __name__ == '__main__':
     import os
+    import sys
     u = unittest.TestLoader().loadTestsFromTestCase(TestSystemStatus)
     with open(os.devnull, 'w') as devnull:
         a = unittest.TextTestRunner(stream=devnull).run(u)
-    print(': {} tests run. {}'.format(
-        a.testsRun, {True: 'OK', False: 'FAIL'}[a.wasSuccessful()]))
+    print(': {x} tests run. {f} failures, {e} errors : {s}'.format(
+        x=a.testsRun,
+        s={True: 'OK', False: 'FAIL'}[a.wasSuccessful()],
+        f=len(a.failures), e=len(a.errors)))
     if a.failures:
+        print('{}\nFAILURES:\n'.format('-' * 80))
         print('\n'.join(['{}\n{}'.format(x[0], x[1])
                          for x in a.failures]))
     if a.errors:
+        print('{}\nERRORS:\n'.format('-' * 80))
         print('\n'.join(['{}\n{}'.format(x[0], x[1])
-                         for x in a.failures]))
+                         for x in a.errors]))
+    if a.failures or a.errors:
+        sys.exit(1)
