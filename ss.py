@@ -19,6 +19,7 @@ This script is compatible with python >= 2.6 and python 3.
 
 from __future__ import division
 from __future__ import with_statement
+from __future__ import print_function
 
 import struct
 import time
@@ -202,7 +203,7 @@ def __get_file(f, m='r'):
         return xf.read()
 
 
-def df(args=[]):
+def __df(args=[]):
     '''
     Simply returns the output of a 'df' command and splits the lines into a
     list. Uses universal_newlines to write it out into a string, not bytes.
@@ -212,7 +213,7 @@ def df(args=[]):
     return __output(dfcmd, universal_newlines=True).splitlines()
 
 
-def ss():
+def __ss():
     '''
     Get the output of 'ss -utnapss', all of the output used by the functions
     below.
@@ -220,7 +221,14 @@ def ss():
     return __output(['ss', '-utnaps'], universal_newlines=True).splitlines()
 
 
-def type_df(x):
+def __ip(ip='/sbin/ip'):
+    return __output([ip, '-o', 'a'], universal_newlines=True)
+
+
+def parse_df(x):
+    '''
+    colors the 'df' output by percent used.
+    '''
     x = x.split()
     percent = x[4].strip('%')
     if percent == '-':
@@ -235,16 +243,15 @@ def type_df(x):
 
 
 def format_df(rawdf):
-    cld = ('{0}{1}{2}'.format(type_df(x), x, bcolors.S)
+    '''
+    Formats the 'df' output after being colored by parse_df.
+    '''
+    cld = ('{0}{1}{2}'.format(parse_df(x), x, bcolors.S)
            for x in rawdf if x.startswith('/'))
     header = rawdf[0]
     ret = [header]
     ret.extend(cld)
     return ret
-
-
-def run_ip(ip='/sbin/ip'):
-    return __output([ip, '-o', 'a'], universal_newlines=True)
 
 
 def parse_ip_output(ip):
@@ -348,6 +355,10 @@ def parse_utmp(utmp,
 
 
 def format_w(loadavg, uptime, utmp):
+    '''
+    Formats the output of the 'w' command. The header is replaced and some
+    slightly more accurate information is used.
+    '''
     loadavg = loadavg.split()
     uptime = uptime.split()
     hruptime = str(timedelta(seconds=int(uptime[0].split('.')[0])))
@@ -426,6 +437,11 @@ def format_mem(memdict, memerr=0.7, memwarn=0.5):
 
 
 def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
+    '''
+    Format the swap info we get from parse_mem().
+    Two optional arguments, swaperr and swapwarn set the threshold for error
+    and warning colors.
+    '''
     total = int(memdict['SwapTotal'])
     free = int(memdict['SwapFree'])
 
@@ -466,7 +482,7 @@ def __regex_ss(a, n):
     return re.match('.+:([^:]*$)', a[n]).groups()[0]
 
 
-def __parse_ssutn(sslist, header=12):
+def parse_ssutn(sslist, header=12):
     '''
     Private function used by format_ssutn thta actually runs the 'ss' command.
     Does the 'sort | uniq -c' part of the old shell script using the
@@ -491,7 +507,7 @@ def format_ssutn(sslist, n=3, header=12):
 
     Returns the 'n' most common sockets.
     '''
-    a = __parse_ssutn(sslist, header=header)
+    a = parse_ssutn(sslist, header=header)
     if n <= (len(a[0])):
         out = a[0].most_common(n)
     else:
@@ -546,14 +562,17 @@ def format_ssntlp(sslist, m=2):
 
 
 def main():
-    sslist = ss()
+    '''
+    Printing out our final product
+    '''
+    sslist = __ss()
     ssutn = format_ssutn(sslist)
     me = __get_file('/proc/meminfo')
     meminfo = parse_mem(me)
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
-    dfh = df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
-    dfi = df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
+    dfh = __df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
+    dfi = __df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
     uts = __get_file('/var/run/utmp', 'rb')
     ut = parse_utmp(uts)
 
@@ -584,7 +603,7 @@ Listening       Recv-Q Send-Q Processes
 {ssproc}
 {sep}""".format(sep=('-' * 75),
                 host=socket.gethostname(),
-                ipaddrs='\n'.join(parse_ip_output(run_ip())),
+                ipaddrs='\n'.join(parse_ip_output(__ip())),
                 wout='\n'.join(format_w(la, up, ut)),
                 fs='\n'.join(format_df(dfh)),
                 inodes='\n'.join(format_df(dfi)),

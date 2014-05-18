@@ -16,7 +16,7 @@ class TestSystemStatus(unittest.TestCase):
     dfout_noinode = '/dev/sda1            0     0       0     - /home'
 
     dfout = ['Filesystem      Size  Used Avail Use% Mounted on',
-        dfout_okay, dfout_warn, dfout_err]
+             dfout_okay, dfout_warn, dfout_err]
 
     dfout_correct = [
         'Filesystem      Size  Used Avail Use% Mounted on',
@@ -59,7 +59,7 @@ MemAvailable:    5763740 kB'''
              ]
 
     ssntlp = ['127.0.0.1:33265      0      5 "weechat",pid=548,fd=14',
-    ':::7700              0    128 "mpd",pid=558,fd=3, "systemd",pid=353,fd=19']
+              ':::7700              0    128 "mpd",pid=558,fd=3, "systemd",pid=353,fd=19']
 
     ssutn = [['      3 55151', '      2 42337', '      1 46661'],
              ['      3 993', '      2 7700', '      1 5127']]
@@ -71,13 +71,13 @@ MemAvailable:    5763740 kB'''
                 'PID': 0, 'User': 'reboot', 'session': 0, 'time_ms': 600043,
                 'type': 2, 'exit_status': 0, 'time_s': 1399570656}
 
-    def test_type_df(self):
+    def test_parse_df(self):
         'Make sure that type_df returns the correct values'
         for i in ((self.dfout_okay, ss.bcolors.GREEN),
                   (self.dfout_warn, ss.bcolors.YELLOW),
                   (self.dfout_err, ss.bcolors.RED),
                   (self.dfout_noinode, '')):
-            self.assertEqual(ss.type_df(i[0]), i[1])
+            self.assertEqual(ss.parse_df(i[0]), i[1])
 
     def test_format_df(self):
         'This runs the type_df stuff, but make sure the full output is okay'
@@ -136,12 +136,12 @@ if __name__ == '__main__':
         s={True: 'OK', False: 'FAIL'}[a.wasSuccessful()],
         f=len(a.failures), e=len(a.errors)))
     if a.failures:
-        print('{}\nFAILURES:\n'.format('-' * 80))
-        print('\n'.join(['{}\n{}'.format(x[0], x[1])
+        print('{0}\nFAILURES:\n'.format('-' * 75))
+        print('\n'.join(['{0}\n{1}'.format(x[0], x[1])
                          for x in a.failures]))
     if a.errors:
-        print('{}\nERRORS:\n'.format('-' * 80))
-        print('\n'.join(['{}\n{}'.format(x[0], x[1])
+        print('{0}\nERRORS:\n'.format('-' * 75))
+        print('\n'.join(['{0}\n{1}'.format(x[0], x[1])
                          for x in a.errors]))
     if a.failures or a.errors:
         sys.exit(1)
