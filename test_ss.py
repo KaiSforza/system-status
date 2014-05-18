@@ -24,17 +24,17 @@ class TestSystemStatus(unittest.TestCase):
         '\x1b[1;33m/dev/sda1      124780544 14392492 105078100  85% /\x1b[0m',
         '\x1b[1;31m/dev/sda1      124780544 14392492 105078100  99% /\x1b[0m']
 
-    ipoutput = '''2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether bc:76:4e:20:1b:a7 brd ff:ff:ff:ff:ff:ff
-    inet 162.242.212.101/24 brd 162.242.212.255 scope global eth0
-       valid_lft forever preferred_lft forever
-    inet6 2001:4802:7801:102:7eb4:d9f4:ff20:1ba7/64 scope global 
-       valid_lft forever preferred_lft forever
-    inet6 fe80::be76:4eff:fe20:1ba7/64 scope link
-       valid_lft forever preferred_lft forever
+    ipoutput = '''1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+    1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+    2: eth0    inet 162.242.212.101/24 brd 162.242.212.255 scope global eth0\       valid_lft forever preferred_lft forever
+    2: eth0    inet6 2001:4802:7801:102:7eb4:d9f4:ff20:1ba7/64 scope global \       valid_lft forever preferred_lft forever
+    2: eth0    inet6 fe80::be76:4eff:fe20:1ba7/64 scope link \       valid_lft forever preferred_lft forever
+    3: eth1    inet 10.176.128.123/19 brd 10.176.159.255 scope global eth1\       valid_lft forever preferred_lft forever
+    3: eth1    inet6 fe80::be76:4eff:fe20:128d/64 scope link \       valid_lft forever preferred_lft forever
     '''
     good_ip_out = ['eth0    162.242.212.101',
-                   'global  2001:4802:7801:102:7eb4:d9f4:ff20:1ba7']
+                   'eth0    2001:4802:7801:102:7eb4:d9f4:ff20:1ba7',
+                   'eth1    10.176.128.123']
 
     micromem = '''MemTotal:        8060916 kB
 MemFree:          694180 kB

@@ -243,7 +243,7 @@ def format_df(rawdf):
 
 
 def run_ip(ip='/sbin/ip'):
-    return output([ip, 'a'], universal_newlines=True)
+    return output([ip, '-o', 'a'], universal_newlines=True)
 
 
 def parse_ip_output(ip):
@@ -254,11 +254,11 @@ def parse_ip_output(ip):
     '''
     # Grabs either 1 or 2 lines (usually) per interface: one for ipv4 (has a
     # number at the end) and an ipv6 address (has 'global ' at the end).
-    rawips = re.findall('(inet[ 6].+([0-9]|global ))$', ip, flags=re.M)
+    rawips = ip.splitlines()
     # Takes each match and splits it on the whitespace.
-    ips = (x[0].split() for x in rawips)
+    ips = (x.split() for x in rawips if (x.find('global') >= 0))
     # Run through all of the IP addresses and format them.
-    return ('{0:8}{1}'.format(i[-1], i[1].split('/')[0]) for i in ips)
+    return ('{0:8}{1}'.format(i[1], i[3].split('/')[0]) for i in ips)
 
 
 def __strip(x, y='\x00', ign='addr'):
