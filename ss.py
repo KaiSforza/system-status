@@ -33,7 +33,7 @@ try:
         '''Returns the output of a subprocess'''
         return check_output(*popenargs, **kwargs)
 
-except:
+except ImportError:
     # Python 2.6 also does not have subprocess.check_output, so we're having to
     # reinvent the wheel on this one, too. Code used from the Python 2.7 module
     # once again.
@@ -57,7 +57,7 @@ except:
 
 try:
     from collections import Counter
-except:
+except ImportError:
     # Python 2.6 does not have the collections.Counter class. This is copied
     # from the Python 2.7 collections module.
     from operator import itemgetter as _itemgetter
