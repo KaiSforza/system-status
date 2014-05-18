@@ -257,7 +257,7 @@ def parse_ip_output(ip):
     # number at the end) and an ipv6 address (has 'global ' at the end).
     rawips = ip.splitlines()
     # Takes each match and splits it on the whitespace.
-    ips = (x.split() for x in rawips if (x.find('global') >= 0))
+    ips = (x.split() for x in rawips if x.find('global') >= 0)
     # Run through all of the IP addresses and format them.
     return ('{0:8}{1}'.format(i[1], i[3].split('/')[0]) for i in ips)
 
@@ -517,8 +517,8 @@ def __format_ss_proc_line(a):
     try:
         proc = a[6]
 
-        proc = re.sub('^users:\(\(', '', proc)
-        proc = re.sub('\)\)$', '', proc)
+        proc = re.sub(r'^users:\(\(', '', proc)
+        proc = re.sub(r'\)\)$', '', proc)
         proclist = proc.split('),(')
         proclen = len(proclist)
         if proclen > 2:
