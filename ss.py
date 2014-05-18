@@ -412,28 +412,23 @@ def format_mem(memdict, memerr=0.7, memwarn=0.5):
 
     memused = total - free  # total used memory in kb
 
-    memused = memused - (buffers + cache)  # Remove the buffers and cache
+    membc = memused - (buffers + cache)  # Remove the buffers and cache
 
-    mempercent = memused / total
+    mempercent = membc / total
 
     totalmb = total / 1024
+    membcmb = membc / 1024
     memusedmb = memused / 1024
 
     if mempercent > memerr:
-        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.RED,
-                                                    memusedmb,
-                                                    bcolors.S,
-                                                    totalmb)
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB ({4:.1f} MB)'.format(
+            bcolors.RED, membcmb, bcolors.S, totalmb, memusedmb)
     elif mempercent > memwarn:
-        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.YELLOW,
-                                                    memusedmb,
-                                                    bcolors.S,
-                                                    totalmb)
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB ({4:.1f} MB)'.format(
+            bcolors.YELLOW, membcmb, bcolors.S, totalmb, memusedmb)
     else:
-        return '{0}{1:.1f} MB{2}/{3:.1f} MB'.format(bcolors.GREEN,
-                                                    memusedmb,
-                                                    bcolors.S,
-                                                    totalmb)
+        return '{0}{1:.1f} MB{2}/{3:.1f} MB ({4:.1f} MB)'.format(
+            bcolors.GREEN, membcmb, bcolors.S, totalmb, memusedmb)
 
 
 def format_swap(memdict, swaperr=0.7, swapwarn=0.5):
