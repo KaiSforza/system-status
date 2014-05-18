@@ -118,7 +118,7 @@ MemAvailable:    5763740 kB'''
 
     def test_parse_utmp_fail(self):
         '''Fail when the bytes are a bad length'''
-        with self.assertRaises(ss.utmpLengthError):
+        with self.assertRaises(ss.UtmpLengthError):
             ss.parse_utmp(b'\x00\x01')
 
     # TODO: format_w tests (makes extensive use of time.*)

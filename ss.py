@@ -185,9 +185,8 @@ except ImportError:
             return result
 
 
-
 # Exceptions:
-class utmpLengthError(Exception):
+class UtmpLengthError(Exception):
     pass
 
 
@@ -320,7 +319,7 @@ def parse_utmp(utmp,
     # length. Raise an exception if we can't parse it correctly before moving
     # forward.
     if not (_filesize % _fmt_len == 0 and not _force):
-        raise utmpLengthError(
+        raise UtmpLengthError(
             "The utmp bytes are either corrupt or the format string is wrong."
         )
 
