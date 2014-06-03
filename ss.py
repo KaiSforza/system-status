@@ -556,6 +556,34 @@ def format_ssntlp(sslist, m=2):
     return (__format_ss_proc_line(x.split()) for x in ssntlp)
 
 
+def parse_release(rel, **kwargs):
+    if re.search(r'NAME=.*', rel[0]):
+        rellist = [x.split('=') for x in rel if x]
+        reldict = dict((x, y) for x, y in rellist)
+        retdict = dict(NAME=reldict['NAME'])
+        try:
+            retdict['VERSION'] = reldict['VERSION']
+        except:
+            retdict['VERSION'] = 'rolling release'
+        return retdict
+
+    elif re.search(r'DISTRIB.*', rel[0]):
+        rellist = [x.split('=') for x in rel if x]
+        reldict = dict((x, y) for x, y in rellist)
+        return {'NAME': reldict['DISTRIB_ID'],
+                'VERSION': reldict['DISTRIB_RELEASE']}
+
+    else:
+        rellist = rel[0].split(' release ')
+        return {'NAME': rellist[0],
+                'VERSION': rellist[1]}
+
+
+def format_release(reldict, **kwargs):
+    return "{n}, {v}".format(n=reldict['NAME'],
+                             v=reldict['VERSION'])
+
+
 def main():
     '''
     Printing out our final product
@@ -570,9 +598,19 @@ def main():
     dfi = __df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
     uts = __get_file('/var/run/utmp', 'rb')
     ut = _parse_utmp(uts)
+    try:
+        rel = __get_file('/etc/os-release').splitlines()
+    except:
+        try:
+            rel = __get_file('/etc/redhat-release').splitlines()
+        except:
+            rel = __get_file('/etc/lsb-release').splitlines()
+
+    release = format_release(parse_release(rel))
 
     p = """{sep}
 Hostname: {host}
+os-release: {osrelease}
 {sep}
 {ipaddrs}
 {sep}
@@ -598,6 +636,7 @@ Listening       Recv-Q Send-Q Processes
 {ssproc}
 {sep}""".format(sep=('-' * 75),
                 host=socket.gethostname(),
+                osrelease=release,
                 ipaddrs='\n'.join(format_ip_output(__ip())),
                 wout='\n'.join(format_w(la, up, ut)),
                 fs='\n'.join(format_df(dfh)),

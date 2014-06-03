@@ -71,6 +71,25 @@ MemAvailable:    5763740 kB'''
                 'PID': 0, 'User': 'reboot', 'session': 0, 'time_ms': 600043,
                 'type': 2, 'exit_status': 0, 'time_s': 1399570656}
 
+    redhat_release = ['Fedora release 21 (Rawhide)']
+    rh_release_dict = {'NAME': 'Fedora', 'VERSION': '21 (Rawhide)'}
+
+    lsb_release = ['DISTRIB_ID=Ubuntu',
+                   'DISTRIB_RELEASE=11.10',
+                   'DISTRIB_CODENAME=oneiric',
+                   'DISTRIB_DESCRIPTION="Ubuntu 11.10"']
+    lsb_release_dict = {'NAME': 'Ubuntu', 'VERSION': '11.10'}
+
+    os_release = ['NAME="Arch Linux"',
+                  'ID=arch',
+                  'PRETTY_NAME="Arch Linux"',
+                  'ANSI_COLOR="0;36"',
+                  'HOME_URL="https://www.archlinux.org/"',
+                  'SUPPORT_URL="https://bbs.archlinux.org/"',
+                  'BUG_REPORT_URL="https://bugs.archlinux.org/"']
+    os_release_dict = {'NAME': '"Arch Linux"', 'VERSION': 'rolling release'}
+
+
     def test_parse_df(self):
         'Make sure that type_df returns the correct values'
         for i in ((self.dfout_okay, ss.bcolors.GREEN),
@@ -120,6 +139,21 @@ MemAvailable:    5763740 kB'''
         '''Fail when the bytes are a bad length'''
         with self.assertRaises(ss.UtmpLengthError):
             ss._parse_utmp(b'\x00\x01')
+
+    def test_parse_release_rh(self):
+        '''Make sure the different redhat-release files are parsed right'''
+        self.assertDictEqual(
+            ss.parse_release(self.redhat_release), self.rh_release_dict)
+
+    def test_parse_release_os(self):
+        '''Make sure the different os-release files are parsed right'''
+        self.assertDictEqual(
+            ss.parse_release(self.os_release), self.os_release_dict)
+
+    def test_parse_release_lsb(self):
+        '''Make sure the different lsb-release files are parsed right'''
+        self.assertDictEqual(
+            ss.parse_release(self.lsb_release), self.lsb_release_dict)
 
     # TODO: format_w tests (makes extensive use of time.*)
     # TODO: format_mem and format_swap tests
