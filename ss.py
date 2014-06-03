@@ -557,25 +557,57 @@ def format_ssntlp(sslist, m=2):
 
 
 def parse_release(rel, **kwargs):
+    '''
+    Parses the /etc/*release file after it has been split into lines.
+    Different handling for the three major *release files:
+        os-release
+            Removes "'s and sets the version to rolling release if it is not
+            specified
+        lsb-release
+            Renames some of the fields that Ubuntu uses in their lsb-release
+            file to 'NAME' and 'VERSION' when returning
+        redhat-release
+            Just splits it and returnst the name and version as specified in
+            lsb-release(1)
+    '''
+    # os-release files start with 'NAME='
     if re.search(r'NAME=.*', rel[0]):
+        # Make a list of lists that is split on '=' and does not contain empty
+        # lines
         rellist = [x.split('=') for x in rel if x]
-        reldict = dict((x, y) for x, y in rellist)
+        # Remove quotes from all entries
+        reldict = dict(
+            (re.sub(r'("|\')', '', x),
+             re.sub(r'("|\')', '', y)) for x, y in rellist)
+        # Set up the return ditctionary with 'NAME' set
         retdict = dict(NAME=reldict['NAME'])
+        # If we don't have a version set, we use the designation 'rolling
+        # release'
         try:
             retdict['VERSION'] = reldict['VERSION']
         except:
             retdict['VERSION'] = 'rolling release'
         return retdict
 
+    # Ubuntu's lsb-release file uses the 'DISTRIB_' identifiers
     elif re.search(r'DISTRIB.*', rel[0]):
+        # More splitting on '='s signs
         rellist = [x.split('=') for x in rel if x]
+        # Set up the dict again, quotes are not used here
         reldict = dict((x, y) for x, y in rellist)
+        # Return the dictionary with the name and version, with the version
+        # being composed of the release and the codename, similar to what is in
+        # the redhat-release files.
         return {'NAME': reldict['DISTRIB_ID'],
                 'VERSION': '{0} ({1})'.format(
                     reldict['DISTRIB_RELEASE'],
                     reldict['DISTRIB_CODENAME'])}
 
+    # redhat-release files are speshul and don't really have any identifying
+    # information.
+    # TODO: Check for length? Maybe have the fallthrough be 'os-release'?
     else:
+        # Split the name and version on the word 'release'
         rellist = rel[0].split(' release ')
         return {'NAME': rellist[0],
                 'VERSION': rellist[1]}

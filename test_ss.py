@@ -87,7 +87,21 @@ MemAvailable:    5763740 kB'''
                   'HOME_URL="https://www.archlinux.org/"',
                   'SUPPORT_URL="https://bbs.archlinux.org/"',
                   'BUG_REPORT_URL="https://bugs.archlinux.org/"']
-    os_release_dict = {'NAME': '"Arch Linux"', 'VERSION': 'rolling release'}
+    os_release_dict = {'NAME': 'Arch Linux', 'VERSION': 'rolling release'}
+    os_rel_fedora = ['NAME=Fedora',
+                     'VERSION="21 (Rawhide)"',
+                     'ID=fedora',
+                     'VERSION_ID=21',
+                     'PRETTY_NAME="Fedora 21 (Rawhide)"',
+                     'ANSI_COLOR="0;34"',
+                     'CPE_NAME="cpe:/o:fedoraproject:fedora:21"',
+                     'HOME_URL="https://fedoraproject.org/"',
+                     'BUG_REPORT_URL="https://bugzilla.redhat.com/"',
+                     'REDHAT_BUGZILLA_PRODUCT="Fedora"',
+                     'REDHAT_BUGZILLA_PRODUCT_VERSION=Rawhide',
+                     'REDHAT_SUPPORT_PRODUCT="Fedora"',
+                     'REDHAT_SUPPORT_PRODUCT_VERSION=Rawhide']
+    os_rel_fedora_dict = {'NAME': 'Fedora', 'VERSION': '21 (Rawhide)'}
 
 
     def test_parse_df(self):
@@ -149,6 +163,12 @@ MemAvailable:    5763740 kB'''
         '''Make sure the different os-release files are parsed right'''
         self.assertDictEqual(
             ss.parse_release(self.os_release), self.os_release_dict)
+
+    def test_parse_release_os_fedora(self):
+        '''Make sure the different os-release files are parsed right for fedora'''
+        self.assertDictEqual(
+            ss.parse_release(self.os_rel_fedora),
+            self.os_rel_fedora_dict)
 
     def test_parse_release_lsb(self):
         '''Make sure the different lsb-release files are parsed right'''
