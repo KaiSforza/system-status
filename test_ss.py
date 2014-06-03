@@ -78,7 +78,7 @@ MemAvailable:    5763740 kB'''
                    'DISTRIB_RELEASE=11.10',
                    'DISTRIB_CODENAME=oneiric',
                    'DISTRIB_DESCRIPTION="Ubuntu 11.10"']
-    lsb_release_dict = {'NAME': 'Ubuntu', 'VERSION': '11.10'}
+    lsb_release_dict = {'NAME': 'Ubuntu', 'VERSION': '11.10 (oneiric)'}
 
     os_release = ['NAME="Arch Linux"',
                   'ID=arch',

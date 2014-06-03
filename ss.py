@@ -571,7 +571,9 @@ def parse_release(rel, **kwargs):
         rellist = [x.split('=') for x in rel if x]
         reldict = dict((x, y) for x, y in rellist)
         return {'NAME': reldict['DISTRIB_ID'],
-                'VERSION': reldict['DISTRIB_RELEASE']}
+                'VERSION': '{0} ({1})'.format(
+                    reldict['DISTRIB_RELEASE'],
+                    reldict['DISTRIB_CODENAME'])}
 
     else:
         rellist = rel[0].split(' release ')
