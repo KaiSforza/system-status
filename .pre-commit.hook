@@ -3,6 +3,7 @@
 # Verify that tests work, but only the changes made in the index.
 _setup() {
   git stash save --keep-index -q "__PRECOMMITSTASH__"
+  return 0
 }
 
 _bad_cleanup() {
@@ -11,7 +12,7 @@ _bad_cleanup() {
   exit 1
 }
 _cleanup() {
-  git stash pop -q
+  git stash pop -q || return 0
 }
 
 trap _bad_cleanup ERR HUP INT
