@@ -48,3 +48,12 @@ a human-readable output like::
 
 (Currently the ``ss.py`` script is under development and will be getting
 new output before ``ss.sh``.)
+
+Development
+===========
+
+If you are going to work on this, it must be able to run on python 2.6+ and
+python 3+. There are tests for the ``ss.py`` script in the ``test_ss.py``
+file, as well as automated pre-commit hooks written in both bash and python.
+Any commit should pass these tests unless there is a very good reason, and
+any new ``parse_`` functions should get at least one test.
