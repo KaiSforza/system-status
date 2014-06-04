@@ -89,4 +89,8 @@ def main():
         print('=!= Nothing done =!=')
 
 if __name__ == '__main__':
-    main()
+    if '-f' in sys.argv:
+        run_python()
+        run_bash()
+    else:
+        main()
