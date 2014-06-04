@@ -69,8 +69,7 @@ def main():
         '''
         [MADRCU ]*             #  Check the flags are not empty
         (ss.(py|ss)|           #  The actual 'ss' scripts
-         test_ss.py|           #  The tests
-         \.pre-commit\.hook.*) #  Hooks
+         test_ss.py)           #  The tests
         ''', flags=re.VERBOSE)
 
     # Check if files have been edited
@@ -79,7 +78,7 @@ def main():
         setup()
         # We need to clean up after ourselves if this failes, so use 'try'
         try:
-            if re.search('(ss.py|test_ss.py|.pre-commit)', stat):
+            if re.search('(ss.py|test_ss.py)', stat):
                 run_python()
             if re.search('ss.sh', stat):
                 run_bash()
