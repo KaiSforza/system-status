@@ -179,7 +179,7 @@ MemAvailable:    5763740 kB'''
     # TODO: format_mem and format_swap tests
 
 
-if __name__ == '__main__':
+def main():
     import os
     import sys
     u = unittest.TestLoader().loadTestsFromTestCase(TestSystemStatus)
@@ -199,3 +199,7 @@ if __name__ == '__main__':
                          for x in a.errors]))
     if a.failures or a.errors:
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
