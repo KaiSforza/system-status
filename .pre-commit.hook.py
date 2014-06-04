@@ -22,13 +22,13 @@ def setup():
 
 def cleanup():
     print("==> Cleaning up the stash...")
-    subprocess.check_call(['git', 'stash', 'pop'])
+    subprocess.check_call(['git', 'stash', 'pop', '-q'])
     print('=!= Done =!=')
 
 
 def bad_cleanup():
     print('!!! FAIL !!!')
-    subprocess.call(['git', 'stash', 'pop'])
+    subprocess.call(['git', 'stash', 'pop', '-q'])
     return 1
 
 
@@ -67,11 +67,11 @@ def main():
 
     files = re.compile(
         '''
-        [MADRCU ]*            #  Check the flags are not empty
-        (ss.(py|ss)|          #  The actual 'ss' scripts
-         test_ss.py)          #  The tests
-         .pre-commit.hook.*   #  Hooks
-        ''')
+        [MADRCU ]*             #  Check the flags are not empty
+        (ss.(py|ss)|           #  The actual 'ss' scripts
+         test_ss.py|           #  The tests
+         \.pre-commit\.hook.*) #  Hooks
+        ''', flags=re.VERBOSE)
 
     # Check if files have been edited
     if re.search(files, stat):
@@ -83,9 +83,9 @@ def main():
                 run_python()
             if re.search('ss.sh', stat):
                 run_bash()
+            cleanup()
         except:
             bad_cleanup()
-        cleanup()
     else:
         print('=!= Nothing done =!=')
 
