@@ -80,7 +80,8 @@ def main():
 
     files = re.compile(
         '''
-        [MADRCU ]*             #  Check the flags are not empty
+        [MADRCU ]{2}           #  Check the flags are not empty
+        [ ]{1}                 #  A single space between status and file
         (ss.(py|ss)|           #  The actual 'ss' scripts
          test_ss.py)           #  The tests
         ''', flags=re.VERBOSE)
