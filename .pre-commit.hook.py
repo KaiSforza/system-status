@@ -8,10 +8,12 @@ from __future__ import print_function
 import subprocess
 import re
 import sys
+import pep8
 
 # For switching versions in the second test
 V = {2: 3, 3: 2}
 ourver = sys.version_info.major
+filename = ['ss.py']
 
 
 def setup():
@@ -55,6 +57,16 @@ def run_python_scripts():
         ['python%s' % V[ourver], 'ss.py'], stdout=subprocess.DEVNULL)
 
 
+def run_pep8():
+    e = 0
+    for f in filename:
+        print('===> Checking {0} with pep8...'.format(f))
+        p = pep8.Checker(filename=f)
+        e = e + p.check_all()
+    if e > 0:
+        raise(Exception, '{0} pep8 errors in files we care about.'.format(e))
+
+
 def run_bash():
     print('===> Running ss.sh script...')
     subprocess.check_call(['bash', 'ss.sh'],
@@ -80,6 +92,7 @@ def main():
         try:
             if re.search('(ss.py|test_ss.py)', stat):
                 run_python()
+                run_pep8()
             if re.search('ss.sh', stat):
                 run_bash()
             cleanup()
@@ -91,6 +104,7 @@ def main():
 if __name__ == '__main__':
     if '-f' in sys.argv:
         run_python()
+        run_pep8()
         run_bash()
     else:
         main()
