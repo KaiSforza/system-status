@@ -8,6 +8,7 @@ from __future__ import print_function
 import subprocess
 import re
 import sys
+import argparse
 import pep8
 
 # For switching versions in the second test
@@ -102,7 +103,11 @@ def main():
         print('=!= Nothing done =!=')
 
 if __name__ == '__main__':
-    if '-f' in sys.argv:
+    a = argparse.ArgumentParser()
+    a.add_argument('-f', help='run checks', action='count')
+    a.add_argument('-s', help='stash changes', action='count')
+    args = a.parse_args()
+    if args.f:
         run_python()
         run_pep8()
         run_bash()
