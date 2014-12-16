@@ -751,8 +751,7 @@ def main():
     '''
     sslist = __ss()
     ssutn = format_ssutn(sslist)
-    me = __get_file('/proc/meminfo')
-    meminfo = _parse_mem(me)
+    meminfo = _parse_mem(__get_file('/proc/meminfo'))
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
     sizes = __get_usage()
