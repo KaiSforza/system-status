@@ -6,23 +6,37 @@ Simple tests for some of the functions in the ss.py script
 
 import unittest
 import ss
+import collections
 from ss import __strip as ssstrip
 
 
 class TestSystemStatus(unittest.TestCase):
-    dfout_okay = '/dev/sda1      124780544 14392492 105078100  13% /'
-    dfout_warn = '/dev/sda1      124780544 14392492 105078100  85% /'
-    dfout_err = '/dev/sda1      124780544 14392492 105078100  99% /'
-    dfout_noinode = '/dev/sda1            0     0       0     - /home'
+    statvfsout = collections.namedtuple('statvfs_result', ['f_bsize',
+                                                           'f_blocks',
+                                                           'f_bavail',
+                                                           'f_files',
+                                                           'f_favail'])
+    dfout_base = ['/dev/sda1', '/', 0, 0, 0, 0]
+    dfout_okay = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
+                                         f_bavail=99, f_files=100,
+                                         f_favail=99)]
+    dfout_warn = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
+                                          f_bavail=15, f_files=100,
+                                          f_favail=99)]
+    dfout_err = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
+                                         f_bavail=1, f_files=100,
+                                         f_favail=99)]
+    dfout_noinode = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
+                                             f_bavail=1, f_files=0,
+                                             f_favail=0)]
 
-    dfout = ['Filesystem      Size  Used Avail Use% Mounted on',
-             dfout_okay, dfout_warn, dfout_err]
+    dfout = [dfout_okay, dfout_warn, dfout_err]
 
     dfout_correct = [
-        'Filesystem      Size  Used Avail Use% Mounted on',
-        '\x1b[1;32m/dev/sda1      124780544 14392492 105078100  13% /\x1b[0m',
-        '\x1b[1;33m/dev/sda1      124780544 14392492 105078100  85% /\x1b[0m',
-        '\x1b[1;31m/dev/sda1      124780544 14392492 105078100  99% /\x1b[0m']
+        'Filesystem    Size  Used  Avail  Use% Mounted on\x1b[0m',
+        '\x1b[1;32m/dev/sda1     400K    4K   396K    1% /\x1b[0m',
+        '\x1b[1;33m/dev/sda1     400K  340K    60K   85% /\x1b[0m',
+        '\x1b[1;31m/dev/sda1     400K  396K     4K   99% /\x1b[0m']
 
     ipoutput = '''1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
     1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
@@ -103,18 +117,9 @@ MemAvailable:    5763740 kB'''
                      'REDHAT_SUPPORT_PRODUCT_VERSION=Rawhide']
     os_rel_fedora_dict = {'NAME': 'Fedora', 'VERSION': '21 (Rawhide)'}
 
-
-    def test_parse_df(self):
-        'Make sure that type_df returns the correct values'
-        for i in ((self.dfout_okay, ss.bcolors.GREEN),
-                  (self.dfout_warn, ss.bcolors.YELLOW),
-                  (self.dfout_err, ss.bcolors.RED),
-                  (self.dfout_noinode, '')):
-            self.assertEqual(ss._parse_df(i[0]), i[1])
-
-    def test_format_df(self):
-        'This runs the type_df stuff, but make sure the full output is okay'
-        self.assertEqual(ss.format_df(self.dfout), self.dfout_correct)
+    def test_format_size(self):
+        'This runs format_size, make sure the full output is okay'
+        self.assertEqual(ss.format_size(self.dfout), self.dfout_correct)
 
     def test_format_ip_output(self):
         '''We should get the correct output from parse_ip_output'''

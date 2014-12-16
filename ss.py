@@ -25,6 +25,7 @@ import struct
 import time
 import socket
 import re
+import os
 from datetime import timedelta
 
 try:
@@ -203,14 +204,14 @@ def __get_file(f, m='r'):
         return xf.read()
 
 
-def __df(args=[]):
-    '''
-    Simply returns the output of a 'df' command and splits the lines into a
-    list. Uses universal_newlines to write it out into a string, not bytes.
-    '''
-    dfcmd = ['df']
-    dfcmd.extend(args)
-    return __output(dfcmd, universal_newlines=True).splitlines()
+def __get_usage():
+    mounts = __get_file('/proc/self/mounts').splitlines()
+    mounts = (a.split() for a in mounts if a.startswith('/dev'))
+    newmounts = []
+    for i in mounts:
+        i.append(os.statvfs(i[1]))
+        newmounts.append(i)
+    return(newmounts)
 
 
 def __ss():
@@ -225,13 +226,22 @@ def __ip(ip='/sbin/ip'):
     return __output([ip, '-o', 'a'], universal_newlines=True)
 
 
-def _parse_df(x):
-    '''
-    colors the 'df' output by percent used.
-    '''
-    x = x.split()
-    percent = x[4].strip('%')
-    if percent == '-':
+def __tohuman(n):
+    size = ['B', 'K', 'M', 'G', 'T']
+    for s in size:
+        if n > 1024:
+            n = n / 1024
+        else:
+            return '{0:.0f}{1}'.format(n, s)
+
+
+def __get_color(u, t):
+    try:
+        percent = 100 * (u / t)
+    except ZeroDivisionError:
+        percent = 0
+
+    if percent == '-' or percent == 0:
         col = ''
     elif int(percent) > 90:
         col = bcolors.RED
@@ -239,18 +249,135 @@ def _parse_df(x):
         col = bcolors.YELLOW
     else:
         col = bcolors.GREEN
-    return col
+    return col, percent
 
 
-def format_df(rawdf):
+def _parse_size(x):
     '''
-    Formats the 'df' output after being colored by parse_df.
+    set colors, as well as more human-readable sizes.
     '''
-    cld = ('{0}{1}{2}'.format(_parse_df(x), x, bcolors.S)
-           for x in rawdf if x.startswith('/'))
-    header = rawdf[0]
-    ret = [header]
-    ret.extend(cld)
+    bsize = x[6].f_bsize
+    totalsize = x[6].f_blocks * bsize
+    available = x[6].f_bavail * bsize
+    used = (x[6].f_blocks - x[6].f_bavail) * bsize
+
+    col, percent = __get_color(used, totalsize)
+
+    totalsize = __tohuman(totalsize)
+    available = __tohuman(available)
+    used = __tohuman(used)
+
+    return {
+        'color': col,
+        'dev': x[0],
+        'size': totalsize,
+        'used': used,
+        'avail': available,
+        'percent': '{0:.0f}%'.format(percent),
+        'mountpoint': x[1]}
+
+
+def _parse_inodes(x):
+    '''
+    set colors, as well as more human-readable sizes.
+    '''
+    files = x[6].f_files
+    available = x[6].f_favail
+    used = files - available
+
+    col, percent = __get_color(used, files)
+
+    files = str(files)
+    available = str(available)
+    used = str(used)
+
+    return {
+        'color': col,
+        'dev': x[0],
+        'size': files,
+        'used': used,
+        'avail': available,
+        'percent': '{0:.1f}%'.format(percent),
+        'mountpoint': x[1]}
+
+
+def format_size(disklist):
+    header = {'color': '',
+              'dev': 'Filesystem',
+              'size': 'Size',
+              'used': 'Used',
+              'avail': 'Avail',
+              'percent': 'Use%',
+              'mountpoint': 'Mounted on'}
+    mlist = [header]
+    ret = []
+    lengths = {'color': 0, 'dev': 0, 'size': 0, 'used': 0,
+               'avail': 0, 'percent': 0, 'mountpoint': 0}
+    fmtlist = map(_parse_size, disklist)
+    for s in fmtlist:
+        for i in s:
+            lengths[i] = max(lengths[i], len(s[i]), len(header[i]))
+        mlist.append(s)
+
+    printstr = ''.join(['{color}',
+                        '{dev: <{devw}}',
+                        '{size: >{sizew}}',
+                        '{used: >{usedw}}',
+                        '{avail: >{availw}}',
+                        '{percent: >{percentw}}',
+                        ' {mountpoint}',
+                        '{c}'])
+    for s in mlist:
+        ret.append(printstr.format(
+            color=s['color'],
+            dev=s['dev'], devw=lengths['dev'] + 2,
+            size=s['size'], sizew=lengths['size'] + 2,
+            used=s['used'], usedw=lengths['used'] + 2,
+            avail=s['avail'], availw=lengths['avail'] + 2,
+            percent=s['percent'],
+            percentw=lengths['percent'] + 2,
+            mountpoint=s['mountpoint'],
+            c=bcolors.S))
+    return ret
+
+
+def format_inodes(disklist):
+    header = {'color': '',
+              'dev': 'Filesystem',
+              'size': 'Inodes',
+              'used': 'IUsed',
+              'avail': 'IFree',
+              'percent': 'IUse%',
+              'mountpoint': 'Mounted on'}
+    mlist = [header]
+    ret = []
+    lengths = {'color': 0, 'dev': 0, 'size': 0, 'used': 0,
+               'avail': 0, 'percent': 0, 'mountpoint': 0}
+    fmtlist = map(_parse_inodes, disklist)
+    for s in fmtlist:
+        for i in s:
+            lengths[i] = max(lengths[i], len(s[i]), len(header[i]))
+        mlist.append(s)
+
+    printstr = ''.join(['{color}',
+                        '{dev: <{devw}}',
+                        '{size: >{sizew}}',
+                        '{used: >{usedw}}',
+                        '{avail: >{availw}}',
+                        '{percent: >{percentw}}',
+                        ' {mountpoint}',
+                        '{c}'])
+    for s in mlist:
+        ret.append(printstr.format(
+            color=s['color'],
+            dev=s['dev'], devw=lengths['dev'] + 2,
+            size=s['size'], sizew=lengths['size'] + 2,
+            used=s['used'], usedw=lengths['used'] + 2,
+            avail=s['avail'], availw=lengths['avail'] + 2,
+            percent=s['percent'],
+            percentw=lengths['percent'] + 2,
+            mountpoint=s['mountpoint'],
+            c=bcolors.S))
     return ret
 
 
@@ -628,8 +755,7 @@ def main():
     meminfo = _parse_mem(me)
     la = __get_file('/proc/loadavg')
     up = __get_file('/proc/uptime')
-    dfh = __df(args=['-h', '-x', 'tmpfs', '-x', 'devtmpfs'])
-    dfi = __df(args=['-i', '-x', 'tmpfs', '-x', 'devtmpfs'])
+    sizes = __get_usage()
     uts = __get_file('/var/run/utmp', 'rb')
     ut = _parse_utmp(uts)
     try:
@@ -673,8 +799,8 @@ Listening       Recv-Q Send-Q Processes
                 osrelease=release,
                 ipaddrs='\n'.join(format_ip_output(__ip())),
                 wout='\n'.join(format_w(la, up, ut)),
-                fs='\n'.join(format_df(dfh)),
-                inodes='\n'.join(format_df(dfi)),
+                fs='\n'.join(format_size(sizes)),
+                inodes='\n'.join(format_inodes(sizes)),
                 memory=format_mem(meminfo),
                 swap=format_swap(meminfo),
                 sssum='\n'.join(sslist[:2]),
