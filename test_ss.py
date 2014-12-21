@@ -13,22 +13,22 @@ from ss import __strip as ssstrip
 class TestSystemStatus(unittest.TestCase):
     statvfsout = collections.namedtuple('statvfs_result', ['f_bsize',
                                                            'f_blocks',
-                                                           'f_bavail',
+                                                           'f_bfree',
                                                            'f_files',
-                                                           'f_favail'])
+                                                           'f_ffree'])
     dfout_base = ['/dev/sda1', '/', 0, 0, 0, 0]
     dfout_okay = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
-                                         f_bavail=99, f_files=100,
-                                         f_favail=99)]
+                                         f_bfree=99, f_files=100,
+                                         f_ffree=99)]
     dfout_warn = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
-                                          f_bavail=15, f_files=100,
-                                          f_favail=99)]
+                                          f_bfree=15, f_files=100,
+                                          f_ffree=99)]
     dfout_err = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
-                                         f_bavail=1, f_files=100,
-                                         f_favail=99)]
+                                         f_bfree=1, f_files=100,
+                                         f_ffree=99)]
     dfout_noinode = dfout_base + [statvfsout(f_bsize=4096, f_blocks=100,
-                                             f_bavail=1, f_files=0,
-                                             f_favail=0)]
+                                             f_bfree=1, f_files=0,
+                                             f_ffree=0)]
 
     dfout = [dfout_okay, dfout_warn, dfout_err]
 

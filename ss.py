@@ -268,13 +268,13 @@ def _parse_size(x):
     '''
     bsize = x[6].f_bsize
     totalsize = x[6].f_blocks * bsize
-    available = x[6].f_bavail * bsize
-    used = (x[6].f_blocks - x[6].f_bavail) * bsize
+    bfree = x[6].f_bfree * bsize
+    used = (x[6].f_blocks - x[6].f_bfree) * bsize
 
     col, percent = __get_color(used, totalsize)
 
     totalsize = __tohuman(totalsize)
-    available = __tohuman(available)
+    bfree = __tohuman(bfree)
     used = __tohuman(used)
 
     return {
@@ -282,7 +282,7 @@ def _parse_size(x):
         'dev': x[0],
         'size': totalsize,
         'used': used,
-        'avail': available,
+        'avail': bfree,
         'percent': '{0:.0f}%'.format(percent),
         'mountpoint': x[1]}
 
@@ -292,13 +292,13 @@ def _parse_inodes(x):
     set colors, as well as more human-readable sizes.
     '''
     files = x[6].f_files
-    available = x[6].f_favail
-    used = files - available
+    ffree = x[6].f_ffree
+    used = files - ffree
 
     col, percent = __get_color(used, files)
 
     files = str(files)
-    available = str(available)
+    ffree = str(ffree)
     used = str(used)
 
     return {
@@ -306,7 +306,7 @@ def _parse_inodes(x):
         'dev': x[0],
         'size': files,
         'used': used,
-        'avail': available,
+        'avail': ffree,
         'percent': '{0:.1f}%'.format(percent),
         'mountpoint': x[1]}
 
