@@ -26,6 +26,7 @@ import time
 import socket
 import re
 import os
+import sys
 from datetime import timedelta
 
 try:
@@ -809,5 +810,21 @@ Listening       Recv-Q Send-Q Processes
 
     return p
 
+
+def errors():
+    '''Print out some basic errors that can come up'''
+    ERR = '{r}ERROR:{c}'.format(r=bcolors.RED, c=bcolors.S)
+    errors = []
+    if not os.path.islink('/etc/mtab'):
+        mtab = '''/etc/mtab is not a symbolic link. This should be a symbolic
+       link to /proc/self/mounts or ../proc/self/mounts.'''
+        errors.append('{ERR} {e}'.format(e=mtab, ERR=ERR))
+    if errors:
+        return '\n'.join(errors)
+
+
 if __name__ == '__main__':
     print(main())
+    e = errors()
+    if e:
+        print(e, file=sys.stderr)
