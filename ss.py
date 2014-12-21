@@ -234,12 +234,15 @@ def __ip(ip='/sbin/ip'):
 
 
 def __tohuman(n):
+    negative = {True: '-', False: ''}
+    real = n
+    n = abs(n)
     size = ['B', 'K', 'M', 'G', 'T']
     for s in size:
         if n > 1024:
             n = n / 1024
         else:
-            return '{0:.0f}{1}'.format(n, s)
+            return '{neg}{n:.0f}{s}'.format(neg=negative[real < 0], n=n, s=s)
 
 
 def __get_color(u, t):
