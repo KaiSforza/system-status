@@ -194,10 +194,16 @@ class UtmpLengthError(Exception):
 
 
 class bcolors:
-    GREEN = '\033[1;32m'
-    YELLOW = '\033[1;33m'
-    RED = '\033[1;31m'
-    S = '\033[0m'
+    if sys.stdout.isatty():
+        GREEN = '\033[1;32m'
+        YELLOW = '\033[1;33m'
+        RED = '\033[1;31m'
+        S = '\033[0m'
+    else:
+        GREEN = ''
+        YELLOW = ''
+        RED = ''
+        S = ''
 
 
 def __get_file(f, m='r'):
