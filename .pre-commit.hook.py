@@ -46,7 +46,7 @@ def run_python_tests():
     test_ss.main()
     print('===> Running tests with python{0}...'.format(V[ourver]))
     subprocess.check_call(
-        ['python%s' % V[ourver], 'test_ss.py'])
+        ['python{v}'.format(v=V[ourver]), 'test_ss.py'])
 
 
 def run_python_scripts():
@@ -55,7 +55,7 @@ def run_python_scripts():
     ss.main()
     print('===> Running script with python{0}...'.format(V[ourver]))
     subprocess.check_call(
-        ['python%s' % V[ourver], 'ss.py'], stdout=subprocess.DEVNULL)
+        ['python{v}'.format(v=V[ourver]), 'ss.py'], stdout=subprocess.DEVNULL)
 
 
 def run_pep8():
