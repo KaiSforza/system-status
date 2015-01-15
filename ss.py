@@ -693,7 +693,7 @@ def format_ssntlp(sslist, m=2):
     return (__format_ss_proc_line(x.split()) for x in ssntlp)
 
 
-def parse_release(rel, **kwargs):
+def parse_release(rel, name='', **kwargs):
     '''
     Parses the /etc/*release file after it has been split into lines.
     Different handling for the three major *release files:
@@ -703,6 +703,10 @@ def parse_release(rel, **kwargs):
         lsb-release
             Renames some of the fields that Ubuntu uses in their lsb-release
             file to 'NAME' and 'VERSION' when returning
+        debian_version
+            Sets up the name to debian, version to the version in the file.
+            Not always a numeric version number. Will not be caught if there
+            is an lsb-release file like in Ubuntu, as it has both.
         redhat-release
             Just splits it and returnst the name and version as specified in
             lsb-release(1)
@@ -740,6 +744,10 @@ def parse_release(rel, **kwargs):
                     reldict['DISTRIB_RELEASE'],
                     reldict['DISTRIB_CODENAME'])}
 
+    elif name == 'debian_version':
+        return {'NAME': 'Debian',
+                'VERSION': rel[0]}
+
     # redhat-release files are speshul and don't really have any identifying
     # information.
     # TODO: Check for length? Maybe have the fallthrough be 'os-release'?
@@ -767,15 +775,17 @@ def main():
     sizes = __get_usage()
     uts = __get_file('/var/run/utmp', 'rb')
     ut = _parse_utmp(uts)
-    try:
-        rel = __get_file('/etc/os-release').splitlines()
-    except:
-        try:
-            rel = __get_file('/etc/redhat-release').splitlines()
-        except:
-            rel = __get_file('/etc/lsb-release').splitlines()
+    for f in ['/etc/os-release',
+              '/etc/redhat-release',
+              '/etc/lsb-release',
+              '/etc/debian_version']:
+        if os.path.exists(f):
+            rel = __get_file(f).splitlines()
+            relfile = f
+            continue
 
-    release = format_release(parse_release(rel))
+    release = format_release(
+        parse_release(rel, name=os.path.split(relfile)[1]))
 
     p = """{sep}
 Hostname: {host}

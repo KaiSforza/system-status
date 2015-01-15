@@ -10,6 +10,7 @@ import re
 import sys
 import argparse
 import pep8
+import os
 
 # For switching versions in the second test
 V = {2: 3, 3: 2}
@@ -45,8 +46,13 @@ def run_python_tests():
     print('===> Running tests with python{0}...'.format(ourver))
     test_ss.main()
     print('===> Running tests with python{0}...'.format(V[ourver]))
-    subprocess.check_call(
-        ['python{v}'.format(v=V[ourver]), 'test_ss.py'])
+    try:
+        subprocess.check_call(['python{v}'.format(v=V[ourver]), 'test_ss.py'],
+                              stderr=subprocess.DEVNULL)
+    except:
+        subprocess.check_call(['python', 'test_ss.py'],
+                              env={'PYENV_VERSION': '2.7.8',
+                                   'PATH': os.environ['PATH']})
 
 
 def run_python_scripts():
@@ -54,8 +60,16 @@ def run_python_scripts():
     print('===> Running script with python{0}...'.format(ourver))
     ss.main()
     print('===> Running script with python{0}...'.format(V[ourver]))
-    subprocess.check_call(
-        ['python{v}'.format(v=V[ourver]), 'ss.py'], stdout=subprocess.DEVNULL)
+    try:
+        subprocess.check_call(
+            ['python{v}'.format(v=V[ourver]), 'ss.py'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
+        subprocess.check_call(
+            ['python', 'ss.py'],
+            env={'PYENV_VERSION': '2.7.8',
+                 'PATH': os.environ['PATH']},
+            stdout=subprocess.DEVNULL)
 
 
 def run_pep8():
