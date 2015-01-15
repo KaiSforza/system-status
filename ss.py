@@ -730,6 +730,15 @@ def parse_release(rel, name='', **kwargs):
             retdict['VERSION'] = 'rolling release'
         return retdict
 
+    # redhat-release files are speshul and don't really have any identifying
+    # information.
+    # TODO: Check for length? Maybe have the fallthrough be 'os-release'?
+    elif name == 'redhat-release':
+        # Split the name and version on the word 'release'
+        rellist = rel[0].split(' release ')
+        return {'NAME': rellist[0],
+                'VERSION': rellist[1]}
+
     # Ubuntu's lsb-release file uses the 'DISTRIB_' identifiers
     elif re.search(r'DISTRIB.*', rel[0]):
         # More splitting on '='s signs
@@ -748,15 +757,11 @@ def parse_release(rel, name='', **kwargs):
         return {'NAME': 'Debian',
                 'VERSION': rel[0]}
 
-    # redhat-release files are speshul and don't really have any identifying
-    # information.
-    # TODO: Check for length? Maybe have the fallthrough be 'os-release'?
     else:
         # Split the name and version on the word 'release'
         rellist = rel[0].split(' release ')
         return {'NAME': rellist[0],
                 'VERSION': rellist[1]}
-
 
 def format_release(reldict, **kwargs):
     return "{n}, {v}".format(n=reldict['NAME'],
