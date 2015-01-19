@@ -787,7 +787,7 @@ def main():
         if os.path.exists(f):
             rel = __get_file(f).splitlines()
             relfile = f
-            continue
+            break
 
     release = format_release(
         parse_release(rel, name=os.path.split(relfile)[1]))
