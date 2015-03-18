@@ -763,6 +763,7 @@ def parse_release(rel, name='', **kwargs):
         return {'NAME': rellist[0],
                 'VERSION': rellist[1]}
 
+
 def format_release(reldict, **kwargs):
     return "{n}, {v}".format(n=reldict['NAME'],
                              v=reldict['VERSION'])
@@ -793,7 +794,6 @@ def main():
             break
     if not release:
         release = "Unknown Release"
-
 
     p = """{sep}
 Hostname: {host}
