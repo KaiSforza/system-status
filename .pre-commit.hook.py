@@ -36,40 +36,42 @@ def bad_cleanup():
     return 1
 
 
-def run_python():
-    run_python_tests()
-    run_python_scripts()
+def run_python(both):
+    run_python_tests(both)
+    run_python_scripts(both)
 
 
-def run_python_tests():
+def run_python_tests(both):
     import test_ss
     print('===> Running tests with python{0}...'.format(ourver))
     test_ss.main()
-    print('===> Running tests with python{0}...'.format(V[ourver]))
-    try:
-        subprocess.check_call(['python{v}'.format(v=V[ourver]), 'test_ss.py'],
-                              stderr=subprocess.DEVNULL)
-    except:
-        subprocess.check_call(['python', 'test_ss.py'],
-                              env={'PYENV_VERSION': '2.7.8',
-                                   'PATH': os.environ['PATH']})
+    if both:
+        print('===> Running tests with python{0}...'.format(V[ourver]))
+        try:
+            subprocess.check_call(['python{v}'.format(v=V[ourver]),
+                                   'test_ss.py'], stderr=subprocess.DEVNULL)
+        except:
+            subprocess.check_call(['python', 'test_ss.py'],
+                                  env={'PYENV_VERSION': '2.7.8',
+                                       'PATH': os.environ['PATH']})
 
 
-def run_python_scripts():
+def run_python_scripts(both):
     import ss
     print('===> Running script with python{0}...'.format(ourver))
     ss.main()
-    print('===> Running script with python{0}...'.format(V[ourver]))
-    try:
-        subprocess.check_call(
-            ['python{v}'.format(v=V[ourver]), 'ss.py'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except:
-        subprocess.check_call(
-            ['python', 'ss.py'],
-            env={'PYENV_VERSION': '2.7.8',
-                 'PATH': os.environ['PATH']},
-            stdout=subprocess.DEVNULL)
+    if both:
+        print('===> Running script with python{0}...'.format(V[ourver]))
+        try:
+            subprocess.check_call(
+                ['python{v}'.format(v=V[ourver]), 'ss.py'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            subprocess.check_call(
+                ['python', 'ss.py'],
+                env={'PYENV_VERSION': '2.7.8',
+                     'PATH': os.environ['PATH']},
+                stdout=subprocess.DEVNULL)
 
 
 def run_pep8():
@@ -88,7 +90,7 @@ def run_bash():
                           stdout=subprocess.DEVNULL)
 
 
-def main():
+def main(both):
     stat = subprocess.check_output(
         ['git', 'status', '--porcelain']).decode()
 
@@ -107,7 +109,7 @@ def main():
         # We need to clean up after ourselves if this failes, so use 'try'
         try:
             if re.search('(ss.py|test_ss.py)', stat):
-                run_python()
+                run_python(both)
                 run_pep8()
             if re.search('ss.sh', stat):
                 run_bash()
@@ -121,10 +123,12 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser()
     a.add_argument('-f', help='run checks', action='count')
     a.add_argument('-s', help='stash changes', action='count')
+    a.add_argument('--both', help='run on both python3 and python2',
+                   action='count', default=0)
     args = a.parse_args()
     if args.f:
-        run_python()
+        run_python(args.both)
         run_pep8()
         run_bash()
     else:
-        main()
+        main(args.both)
