@@ -780,6 +780,7 @@ def main():
     sizes = __get_usage()
     uts = __get_file('/var/run/utmp', 'rb')
     ut = _parse_utmp(uts)
+    release = None
     for f in ['/etc/os-release',
               '/etc/redhat-release',
               '/etc/lsb-release',
@@ -787,10 +788,12 @@ def main():
         if os.path.exists(f):
             rel = __get_file(f).splitlines()
             relfile = f
+            release = format_release(
+                parse_release(rel, name=os.path.split(relfile)[1]))
             break
+    if not release:
+        release = "Unknown Release"
 
-    release = format_release(
-        parse_release(rel, name=os.path.split(relfile)[1]))
 
     p = """{sep}
 Hostname: {host}
