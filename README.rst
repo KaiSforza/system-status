@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/KaiSforza/system-status.svg?branch=master
+    :target: https://travis-ci.org/KaiSforza/system-status
+
 System Status
 =============
 
