@@ -62,16 +62,17 @@ def run_python_scripts(both):
     ss.main()
     if both:
         print('===> Running script with python{0}...'.format(V[ourver]))
-        try:
-            subprocess.check_call(
-                ['python{v}'.format(v=V[ourver]), 'ss.py'],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
-            subprocess.check_call(
-                ['python', 'ss.py'],
-                env={'PYENV_VERSION': '2.7.8',
-                     'PATH': os.environ['PATH']},
-                stdout=subprocess.DEVNULL)
+        with open(os.devnull, 'w') as devnull:
+            try:
+                subprocess.check_call(
+                    ['python{v}'.format(v=V[ourver]), 'ss.py'],
+                    stdout=devnull, stderr=devnull)
+            except:
+                subprocess.check_call(
+                    ['python', 'ss.py'],
+                    env={'PYENV_VERSION': '2.7.8',
+                        'PATH': os.environ['PATH']},
+                    stdout=devnull)
 
 
 def run_pep8():
@@ -86,8 +87,9 @@ def run_pep8():
 
 def run_bash():
     print('===> Running ss.sh script...')
-    subprocess.check_call(['bash', 'ss.sh'],
-                          stdout=subprocess.DEVNULL)
+    with open(os.devnull, 'w') as devnull:
+        subprocess.check_call(['bash', 'ss.sh'],
+                              stdout=devnull)
 
 
 def main(both):
